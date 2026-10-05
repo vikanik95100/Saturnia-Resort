@@ -1,0 +1,912 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Saturnia Guest App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap"><style>
+/* ============================================================
+   TOKENS — page stage (theme-aware)
+   ============================================================ */
+:root{
+  --stage:#E4EAEE;
+  --stage-2:#F6F8F9;
+  --stage-3:#D9E1E7;
+  --ink:#1E2A33;
+  --ink-2:#4C5967;
+  --muted:#6A7885;
+  --line:#C6D0D8;
+  --line-soft:#D6DEE4;
+  --accent:#946B1C;
+  --accent-soft:#EFD9B4;
+  --pine:#2F6B93;
+  --on-pine:#F6F8F9;
+  --shadow:0 30px 70px -30px rgba(22,33,28,.45), 0 4px 14px -6px rgba(22,33,28,.2);
+
+  --display:"Spectral",Georgia,"Times New Roman",serif;
+  --ui:"Work Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"Work Sans",-apple-system,sans-serif;
+
+  /* app palette — fixed: a device screen keeps its own identity */
+  --app-bg:#F6F8F9;
+  --app-surface:#FFFFFF;
+  --app-ink:#1E2A33;
+  --app-ink-2:#44525E;
+  --app-muted:#6F7C88;
+  --app-line:#DDE5EB;
+  --app-pine:#2F6B93;
+  --app-pine-2:#4C8AB3;
+  --app-marigold:#C99A3E;
+  --app-marigold-ink:#7A5714;
+  --app-clay:#B0603F;
+  --app-clay-soft:#F4E7DF;
+  --app-mint:#E6EFF5;
+  --app-sand:#F1ECE0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --stage:#0E151A;
+    --stage-2:#131D24;
+    --stage-3:#1A2630;
+    --ink:#E6EBEF;
+    --ink-2:#BDC8D1;
+    --muted:#8895A0;
+    --line:#27343F;
+    --line-soft:#1F2B35;
+    --accent:#C99A3E;
+    --accent-soft:#3A2E17;
+    --pine:#8DBBD9;
+    --on-pine:#0E151A;
+    --shadow:0 40px 90px -40px rgba(0,0,0,.8), 0 4px 18px -8px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --stage:#0E151A;
+  --stage-2:#131D24;
+  --stage-3:#1A2630;
+  --ink:#E6EBEF;
+  --ink-2:#BDC8D1;
+  --muted:#8895A0;
+  --line:#27343F;
+  --line-soft:#1F2B35;
+  --accent:#C99A3E;
+  --accent-soft:#3A2E17;
+  --pine:#8DBBD9;
+  --on-pine:#0E151A;
+  --shadow:0 40px 90px -40px rgba(0,0,0,.8), 0 4px 18px -8px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--stage);
+  color:var(--ink);
+  font-family:var(--ui);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.eyebrow{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+}
+
+/* ============================================================
+   PAGE CHROME
+   ============================================================ */
+.topbar{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:18px 28px;border-bottom:1px solid var(--line);
+  background:var(--stage-2);
+}
+.mark{
+  width:38px;height:38px;border-radius:11px;flex:none;
+  background:var(--pine);color:var(--on-pine);
+  display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.02em;
+}
+.topbar-title{display:flex;flex-direction:column;gap:1px;margin-right:auto}
+.topbar-title strong{font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.01em}
+.topbar-title span{font-size:12.5px;color:var(--muted)}
+.tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 9px;border-radius:6px;border:1px solid var(--line);color:var(--muted);
+}
+.tag.hot{border-color:var(--accent);color:var(--accent)}
+.tag.toggle{cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.tag.toggle:hover{border-color:var(--ink-2);color:var(--ink)}
+.tag.toggle[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:var(--on-pine)}
+
+/* ============================================================
+   THREE-COLUMN STAGE
+   ============================================================ */
+.layout{
+  display:grid;
+  grid-template-columns:238px minmax(0,1fr);
+  gap:0;
+  align-items:start;
+  min-height:calc(100vh - 76px);
+}
+/* Demo view is the default: Italian prototype only, no English on screen.
+   The "Note" button (or N) reveals the presenter notes. */
+body[data-notes="on"] .notes{display:block}
+@media (min-width:1181px){
+  body[data-notes="on"] .layout{grid-template-columns:238px minmax(0,1fr) 340px}
+}
+.rail{
+  border-right:1px solid var(--line);
+  padding:22px 16px 40px;
+  position:sticky;top:0;
+  max-height:100vh;overflow-y:auto;
+}
+.rail-group{margin-bottom:18px}
+.rail-group > .eyebrow{padding:0 10px 7px}
+.rail-item{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:8px 10px;border-radius:9px;color:var(--ink-2);
+  font-size:13.5px;font-weight:500;transition:background .15s,color .15s;
+}
+.rail-item:hover{background:var(--stage-3);color:var(--ink)}
+.rail-item .num{
+  font-family:var(--mono);font-size:10.5px;color:var(--muted);
+  width:18px;flex:none;
+}
+.rail-item[aria-current="true"]{background:var(--pine);color:var(--on-pine);font-weight:600}
+.rail-item[aria-current="true"] .num{color:inherit;opacity:.65}
+
+.stage{
+  padding:30px 20px 48px;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  background:
+    radial-gradient(680px 420px at 50% 18%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 70%),
+    var(--stage);
+}
+.stage-hint{
+  display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12.5px;
+}
+.stage-hint .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+
+.notes{
+  display:none;
+  border-left:1px solid var(--line);
+  padding:26px 24px 48px;
+  position:sticky;top:0;
+  max-height:100vh;overflow-y:auto;
+  background:var(--stage-2);
+}
+
+/* ============================================================
+   PHONE FRAME
+   ============================================================ */
+.phone-wrap{
+  --s:1;
+  width:calc(414px * var(--s));
+  height:calc(836px * var(--s));
+}
+.phone{
+  width:414px;height:836px;
+  transform:scale(var(--s));transform-origin:top center;
+  border-radius:50px;
+  background:linear-gradient(160deg,#2C3A44,#0F161B 55%,#222D36);
+  padding:12px;
+  box-shadow:var(--shadow), 0 0 0 1.5px rgba(255,255,255,.07) inset;
+  position:relative;
+}
+.phone::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  top:24px;width:104px;height:26px;border-radius:14px;background:#0A0F13;z-index:6;
+}
+.screen{
+  width:100%;height:100%;border-radius:39px;overflow:hidden;
+  background:var(--app-bg);color:var(--app-ink);
+  display:flex;flex-direction:column;position:relative;
+}
+
+/* status bar */
+.statusbar{
+  height:48px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 26px 4px;font-size:12.5px;font-weight:700;letter-spacing:.01em;
+  position:relative;z-index:5;
+}
+.statusbar.on-dark{color:#fff}
+.sb-right{display:flex;align-items:center;gap:5px}
+.sb-bar{width:3px;border-radius:1px;background:currentColor}
+.sb-batt{width:22px;height:11px;border:1.4px solid currentColor;border-radius:3px;position:relative;opacity:.9}
+.sb-batt::before{content:"";position:absolute;inset:2px;right:6px;background:currentColor;border-radius:1px}
+
+/* scrolling body */
+.app-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.app-scroll::-webkit-scrollbar{display:none}
+.pad{padding:0 20px}
+.stack{display:flex;flex-direction:column}
+
+/* app views */
+.view{display:none;height:100%;flex-direction:column}
+.view.active{display:flex}
+
+/* ============================================================
+   APP COMPONENTS
+   ============================================================ */
+.a-h1{font-family:var(--display);font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.a-h2{font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.015em}
+.a-h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.a-label{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--app-muted);
+}
+.a-meta{font-size:12px;color:var(--app-muted);font-weight:500}
+
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+.sec-head .link{font-size:12px;font-weight:600;color:var(--app-pine-2)}
+
+.appbar{
+  flex:none;display:flex;align-items:center;gap:12px;padding:2px 20px 14px;
+}
+.appbar .a-h2{margin-right:auto}
+.icon-btn{
+  width:36px;height:36px;border-radius:11px;flex:none;
+  display:grid;place-items:center;background:var(--app-surface);
+  border:1px solid var(--app-line);color:var(--app-ink-2);
+}
+.icon-btn.ghost{background:transparent;border-color:transparent}
+.icon-btn.on-dark{background:rgba(255,255,255,.16);border-color:transparent;color:#fff}
+
+.card{
+  background:var(--app-surface);border:1px solid var(--app-line);
+  border-radius:18px;padding:14px;
+}
+
+/* thumbnails built from gradients + line art, no external assets */
+.thumb{
+  position:relative;overflow:hidden;border-radius:14px;flex:none;
+  background:linear-gradient(145deg,var(--t1,#3C6455),var(--t2,#1E3A30));
+}
+.thumb > svg:not(.ico){position:absolute;inset:0;width:100%;height:100%}
+.thumb > svg.ico{position:relative}
+.thumb .dur{
+  position:absolute;right:6px;bottom:6px;z-index:2;
+  font-family:var(--mono);font-size:9.5px;color:#fff;
+  background:rgba(11,16,14,.62);padding:2px 5px;border-radius:5px;
+}
+.t-spring{--t1:#7DBAD8;--t2:#2A6C93}
+.t-spa{--t1:#B9A58C;--t2:#6A5A45}
+.t-golf{--t1:#6E8F5E;--t2:#2F4A27}
+.t-dine{--t1:#B0603F;--t2:#5C2A17}
+.t-active{--t1:#8A9A72;--t2:#3B4730}
+.t-night{--t1:#2F4F73;--t2:#0F1E33}
+.t-private{--t1:#A6C4D9;--t2:#4C6E86}
+.t-pilates{--t1:#3E6858;--t2:#1D362C}
+.t-yoga{--t1:#5C7F8C;--t2:#2A414B}
+.t-flow{--t1:#B07B2E;--t2:#5E3D11}
+.t-mobility{--t1:#6E7F5A;--t2:#33402A}
+.t-zumba{--t1:#C0705E;--t2:#6B3226}
+.t-prenatal{--t1:#C99A9A;--t2:#7A4E52}
+
+/* horizontal rails */
+.hrail{display:flex;gap:12px;overflow-x:auto;padding:2px 20px 4px;scrollbar-width:none}
+.hrail::-webkit-scrollbar{display:none}
+
+/* class list row */
+.row{
+  display:flex;gap:12px;align-items:center;width:100%;text-align:left;
+  background:var(--app-surface);border:1px solid var(--app-line);
+  border-radius:16px;padding:9px;transition:border-color .15s,transform .1s;
+}
+.row:hover{border-color:var(--app-pine-2)}
+.row:active{transform:scale(.99)}
+.row .thumb{width:70px;height:62px}
+.row-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.row-body .t{font-size:13.5px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+
+/* pills / chips */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;
+  background:var(--app-mint);color:var(--app-pine);
+}
+.pill.sand{background:var(--app-sand);color:var(--app-marigold-ink)}
+.pill.clay{background:var(--app-clay-soft);color:#8E4437}
+.pill.live{background:#FBE9E6;color:#A83B2A}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:0 20px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;
+  border:1px solid var(--app-line);background:var(--app-surface);color:var(--app-ink-2);
+}
+.chip[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine);color:#fff}
+
+.seg{
+  display:flex;gap:3px;background:var(--app-line);padding:3px;border-radius:12px;
+}
+.seg button{
+  flex:1;font-size:12.5px;font-weight:600;padding:7px 4px;border-radius:9px;color:var(--app-ink-2);
+}
+.seg button[aria-pressed="true"]{background:var(--app-surface);color:var(--app-ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-size:14px;font-weight:700;padding:13px 18px;border-radius:14px;
+  background:var(--app-pine);color:#fff;width:100%;transition:filter .15s;
+}
+.btn:hover{filter:brightness(1.1)}
+.btn.amber{background:var(--app-marigold);color:#2A1B04}
+.btn.outline{background:transparent;border:1.5px solid var(--app-line);color:var(--app-ink)}
+.btn.sm{font-size:12.5px;padding:8px 14px;width:auto;border-radius:11px}
+
+/* progress */
+.bar{display:block;height:6px;border-radius:99px;background:var(--app-line);overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:99px;background:var(--app-pine-2)}
+.bar.amber > i{background:var(--app-marigold)}
+.bar.clay > i{background:var(--app-clay)}
+
+/* tab bar */
+.tabbar{
+  flex:none;display:flex;padding:9px 8px 22px;
+  background:color-mix(in srgb, var(--app-surface) 88%, transparent);
+  backdrop-filter:blur(14px);
+  border-top:1px solid var(--app-line);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:9.5px;font-weight:600;color:var(--app-muted);padding:4px 0;
+}
+.tab[aria-current="true"]{color:var(--app-pine)}
+.tab svg{width:21px;height:21px}
+
+/* hero blocks */
+.hero-pine{
+  background:linear-gradient(155deg,#245A80,#16394F);color:#fff;position:relative;overflow:hidden;
+}
+.hero-pine .deco{position:absolute;inset:0;opacity:.55}
+
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{background:var(--app-surface);border:1px solid var(--app-line);border-radius:15px;padding:11px 12px}
+.stat b{display:block;font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+
+/* schedule */
+.slot{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--app-line)}
+.slot:last-child{border-bottom:0}
+.slot .time{font-family:var(--mono);font-size:12px;font-weight:500;width:44px;flex:none;padding-top:2px}
+.week{display:flex;gap:6px}
+.day{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 0;border-radius:12px;border:1px solid transparent;font-size:11px;color:var(--app-muted);
+}
+.day b{font-size:14px;color:var(--app-ink);font-variant-numeric:tabular-nums}
+.day[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine);color:rgba(255,255,255,.75)}
+.day[aria-pressed="true"] b{color:#fff}
+
+/* day rows in a program */
+.dayrow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--app-line);width:100%;text-align:left}
+.dayrow:last-child{border-bottom:0}
+.tick{
+  width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;
+  border:1.5px solid var(--app-line);color:var(--app-muted);
+}
+.tick.done{background:var(--app-pine);border-color:var(--app-pine);color:#fff}
+.tick.today{border-color:var(--app-marigold);color:var(--app-marigold-ink);border-width:2px}
+
+/* quote from Roberta */
+.quote{
+  background:var(--app-sand);border-radius:16px;padding:13px 14px;
+  font-family:var(--display);font-size:14px;line-height:1.45;color:#4A3A1A;
+}
+.quote .who{display:block;margin-top:7px;font-family:var(--ui);font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--app-marigold-ink)}
+
+/* settings list */
+.list-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 0;border-bottom:1px solid var(--app-line);font-size:14px;font-weight:600}
+.list-item:last-child{border-bottom:0}
+.list-item .v{margin-left:auto;font-size:12.5px;font-weight:500;color:var(--app-muted)}
+
+/* plan cards */
+.plan{
+  width:100%;text-align:left;border:1.5px solid var(--app-line);background:var(--app-surface);
+  border-radius:18px;padding:14px;display:flex;gap:12px;align-items:flex-start;
+}
+.plan[aria-pressed="true"]{border-color:var(--app-pine);background:var(--app-mint)}
+.radio{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--app-line);flex:none;margin-top:2px;display:grid;place-items:center}
+.plan[aria-pressed="true"] .radio{border-color:var(--app-pine);background:var(--app-pine);color:#fff}
+
+/* toggle */
+.switch{width:42px;height:25px;border-radius:99px;background:var(--app-pine);position:relative;flex:none;margin-left:auto}
+.switch::after{content:"";position:absolute;top:2.5px;left:20px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .18s}
+.switch[aria-pressed="false"]{background:var(--app-line)}
+.switch[aria-pressed="false"]::after{left:2.5px}
+
+/* success burst */
+.burst{
+  width:76px;height:76px;border-radius:50%;display:grid;place-items:center;
+  background:var(--app-pine);color:#fff;margin:0 auto;
+  box-shadow:0 0 0 12px var(--app-mint);
+}
+
+/* ============================================================
+   NOTES PANEL
+   ============================================================ */
+.notes h2{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;margin:6px 0 10px}
+.notes .n-list{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.notes .n-list li{display:flex;gap:9px;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.notes .n-list li::before{
+  content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);
+  flex:none;margin-top:8px;
+}
+.n-why{
+  margin-top:20px;padding:14px;border-radius:13px;
+  background:var(--stage);border:1px solid var(--line-soft);
+}
+.n-why p{font-size:13.5px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+.n-nav{display:flex;gap:8px;margin-top:22px}
+.n-nav button{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px;border-radius:11px;border:1px solid var(--line);
+  font-size:13px;font-weight:600;color:var(--ink-2);background:var(--stage-2);
+}
+.n-nav button:hover:not(:disabled){background:var(--stage-3);color:var(--ink)}
+.n-nav button:disabled{opacity:.4;cursor:not-allowed}
+.n-foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted);line-height:1.6}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  .layout{grid-template-columns:1fr;min-height:0}
+  .rail{
+    position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);
+    display:flex;gap:8px;overflow-x:auto;padding:12px 16px;
+  }
+  .rail-group{display:flex;align-items:center;gap:8px;margin:0}
+  .rail-group > .eyebrow{padding:0 4px 0 6px;white-space:nowrap}
+  .rail-item{width:auto;white-space:nowrap;border:1px solid var(--line);padding:7px 12px}
+  .rail-item .num{display:none}
+  .notes{position:static;max-height:none;border-left:0;border-top:1px solid var(--line)}
+}
+@media (max-width:520px){
+  .phone-wrap{--s:.78}
+  .stage{padding:20px 10px 34px}
+  .topbar{padding:14px 16px}
+}
+
+.a-h1{font-size:31px;font-weight:600;letter-spacing:-.01em}.a-h2{font-size:21px}.stat b{font-size:22px}
+.a-label,.eyebrow{font-weight:600;font-size:9.5px}
+.quote{font-size:15px}.mark{font-size:20px}.topbar-title strong{font-size:22px}
+.bubble{max-width:82%;padding:10px 13px;border-radius:16px;font-size:13.5px;line-height:1.45}
+.bubble.in{background:var(--app-surface);border:1px solid var(--app-line);border-bottom-left-radius:5px;align-self:flex-start}
+.bubble.out{background:var(--app-pine);color:#fff;border-bottom-right-radius:5px;align-self:flex-end}
+.bubble small{display:block;font-size:10.5px;opacity:.6;margin-top:4px}
+.bubble .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.bubble .acts button{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;background:var(--app-mint);color:var(--app-pine)}
+.typing{display:flex;gap:4px;padding:13px 14px}.typing i{width:6px;height:6px;border-radius:50%;background:var(--app-muted);animation:bl 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.slotgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slotbtn{padding:10px 4px;border-radius:13px;border:1.5px solid var(--app-line);background:var(--app-surface);text-align:center;font-size:13px;font-weight:700}
+.slotbtn small{display:block;font-size:10.5px;font-weight:500;color:var(--app-muted);margin-top:1px}
+.slotbtn[aria-pressed="true"]{border-color:var(--app-pine);background:var(--app-mint);color:var(--app-pine)}
+.slotbtn:disabled{opacity:.45;cursor:not-allowed}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--app-line);background:var(--app-surface);font-size:17px;font-weight:700;line-height:1}
+.stepper b{font-family:var(--display);font-size:22px;min-width:20px;text-align:center}
+.qgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.qa{display:flex;gap:10px;align-items:center;text-align:left;padding:12px;border-radius:15px;background:var(--app-surface);border:1px solid var(--app-line);font-size:13px;font-weight:700;line-height:1.25}
+.qa i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--app-mint);color:var(--app-pine);flex:none}
+.qa:hover{border-color:var(--app-pine-2)}
+.menu-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--app-line);align-items:flex-start}
+.menu-item:last-child{border-bottom:0}
+.menu-item .price{margin-left:auto;font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--app-line)}
+.tl{position:relative;padding:0 0 16px}
+.tl::before{content:"";position:absolute;left:-21px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--app-surface);border:2.5px solid var(--app-pine-2)}
+.tl.now::before{border-color:var(--app-marigold);background:var(--app-marigold)}
+.tl.sug::before{border-style:dashed;border-color:var(--app-muted)}
+.tl .t{font-family:var(--mono);font-size:11px;color:var(--app-muted);font-weight:600}
+.payopt{width:100%;text-align:left;display:flex;gap:12px;align-items:center;padding:13px;border:1.5px solid var(--app-line);border-radius:15px;background:var(--app-surface);font-size:13.5px;font-weight:700}
+.payopt[aria-pressed="true"]{border-color:var(--app-pine);background:var(--app-mint)}
+.payopt .radio{margin:0}
+.payopt[aria-pressed="true"] .radio{border-color:var(--app-pine);background:var(--app-pine);color:#fff}
+.qrbox{background:#fff;border-radius:20px;padding:16px;border:1px solid var(--app-line);display:grid;place-items:center}
+.hrow{display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--app-line)}
+.hrow:last-child{border-bottom:0}.hrow b{font-size:13.5px}.hrow .h{margin-left:auto;font-size:12.5px;color:var(--app-ink-2);font-variant-numeric:tabular-nums;text-align:right}
+</style></head><body>
+<svg style="display:none" aria-hidden="true"><symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></symbol><symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol><symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></symbol><symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol><symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol><symbol id="i-fork" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8a2 2 0 0 1-2 2M7 3v6M17 21V3c-2.5 1.5-3 5-3 8h3"/></symbol><symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2L19 19M19 5l-1.8 1.8M6.8 17.2L5 19"/></symbol><symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol><symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol><symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol><symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></symbol><symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z"/><path d="M10 19a2.2 2.2 0 0 0 4 0"/></symbol><symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6.1 6.5-10.5a6.5 6.5 0 1 0-13 0C5.5 14.9 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/></symbol><symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12L20 4l-6 16-2.5-6.5z"/></symbol><symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10.5h18M7 15h3"/></symbol><symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 14h2v6h-4M14 18h2"/></symbol><symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8.5 7.5L12 4l3.5 3.5"/><path d="M5.5 13v5.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V13"/></symbol></svg>
+<header class="topbar"><div class="mark">S</div><div class="topbar-title"><strong>Saturnia&nbsp;Guest&nbsp;App</strong><span>Concept prototype · a branded guest app for Terme di Saturnia Spa &amp; Golf Resort</span></div><span class="tag hot">Clickable</span><span class="tag">15 screens</span><span class="tag">iOS &amp; Android</span><button class="tag toggle" id="lang-toggle" aria-label="Language" title="Switch language">EN</button><button class="tag toggle" id="notes-toggle" aria-pressed="false" title="Presenter notes (N)">Notes</button></header>
+<div class="layout"><nav class="rail" id="rail" aria-label="Screen index">
+<div class="rail-group"><div class="eyebrow">Arrival</div><button class="rail-item" data-go="welcome"><span class="num">01</span>Welcome</button><button class="rail-item" data-go="home"><span class="num">02</span>Today</button></div>
+<div class="rail-group"><div class="eyebrow">Discover</div><button class="rail-item" data-go="explore"><span class="num">03</span>Explore</button><button class="rail-item" data-go="spring"><span class="num">04</span>Thermal spring</button><button class="rail-item" data-go="spa"><span class="num">05</span>Spa &amp; Private SPA</button><button class="rail-item" data-go="golf"><span class="num">06</span>Golf</button><button class="rail-item" data-go="active"><span class="num">07</span>Active wellness</button></div>
+<div class="rail-group"><div class="eyebrow">Book without calling</div><button class="rail-item" data-go="slots"><span class="num">08</span>Pick a time</button><button class="rail-item" data-go="checkout"><span class="num">09</span>Checkout</button><button class="rail-item" data-go="confirmed"><span class="num">10</span>Confirmed</button><button class="rail-item" data-go="pass"><span class="num">11</span>Thermal pass</button></div>
+<div class="rail-group"><div class="eyebrow">On property</div><button class="rail-item" data-go="dining"><span class="num">12</span>Dining</button><button class="rail-item" data-go="chat"><span class="num">13</span>Concierge</button><button class="rail-item" data-go="trip"><span class="num">14</span>My trip</button><button class="rail-item" data-go="stay"><span class="num">15</span>My stay</button></div></nav><main class="stage"><div class="phone-wrap"><div class="phone"><div class="screen">
+<section class="view" data-view="welcome" style="background:linear-gradient(160deg,#2F6B93 0%,#10283A 62%,#4A3A1A 100%)"><div class="statusbar on-dark"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="app-scroll" style="display:flex;flex-direction:column;color:#fff">
+<div style="position:relative;height:236px;flex:none;overflow:hidden"><img alt="Terme di Saturnia Natural Destination" src="data:image/jpeg;base64,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" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,30,45,.15),rgba(10,30,45,0) 45%,rgba(14,36,52,.6))"></div></div>
+<div class="pad stack" style="gap:14px"><span class="a-label" style="color:rgba(255,255,255,.65)">Terme di Saturnia · Maremma, Tuscany</span>
+<h1 class="a-h1" style="font-size:34px;color:#fff;line-height:1.05">The spring, the spa and the course, in your pocket.</h1>
+<p style="font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.82)">Book a massage, a tee time or a moonlit soak, reserve dinner, or message the concierge. No phone calls, no waiting for a reply.</p>
+<div style="display:flex;gap:18px;margin:4px 0 2px"><div><b style="font-family:var(--display);font-size:26px">37.5°C</b><div style="font-size:11px;color:rgba(255,255,255,.65)">natural spring</div></div><div><b style="font-family:var(--display);font-size:26px">124</b><div style="font-size:11px;color:rgba(255,255,255,.65)">rooms &amp; suites</div></div><div><b style="font-family:var(--display);font-size:26px">120 ha</b><div style="font-size:11px;color:rgba(255,255,255,.65)">of Maremma park</div></div></div>
+<button class="btn amber" data-go="home" style="margin-top:8px">Add my reservation</button>
+<button class="btn" data-go="home" style="background:rgba(255,255,255,.14)">Sign in</button>
+<p style="font-size:11.5px;color:rgba(255,255,255,.55);text-align:center;margin:2px 0 22px">Use the reservation number from your confirmation email</p></div></div></section>
+<section class="view" data-view="home"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><div style="margin-right:auto"><span class="a-label">Tuesday, Oct 13 · 17°C</span><h2 class="a-h2" style="margin-top:1px">Buongiorno, Sofia</h2></div><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:20px;padding-bottom:16px">
+<div class="pad"><div class="card hero-pine" style="padding:14px 15px;border:0"><svg class="deco" viewBox="0 0 380 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#BFD9EA" stroke-width="1" opacity=".35"><ellipse cx="300" cy="60" rx="50" ry="18"/><ellipse cx="300" cy="60" rx="90" ry="32"/><ellipse cx="300" cy="60" rx="130" ry="46"/></g></svg>
+<div style="position:relative;display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:14px;background:rgba(201,154,62,.95);color:#2A1B04;display:grid;place-items:center;flex:none"><svg width="22" height="22"><use href="#i-key"/></svg></div>
+<div style="flex:1;min-width:0"><div style="font-family:var(--display);font-size:23px;font-weight:600;color:#fff;line-height:1.1">Garden Junior Suite 128</div><div style="font-size:11.5px;color:rgba(255,255,255,.78)">Oct 13 – 17 · 2 guests · check-out Sat 11 AM</div></div></div>
+<div style="position:relative;display:flex;gap:8px;margin-top:13px"><button class="btn amber sm" style="flex:1">Unlock door</button><button class="btn sm" style="flex:1;background:rgba(255,255,255,.16)" data-go="stay">Stay details</button></div></div></div>
+<div class="pad"><div class="card" style="padding:12px 14px"><div style="display:grid;grid-template-columns:repeat(3,1fr);text-align:center;gap:6px"><div><b style="display:block;font-family:var(--display);font-size:25px;color:var(--app-pine)">37.5°C</b><span class="a-label">Spring water</span></div><div><b style="display:block;font-family:var(--display);font-size:25px;color:var(--app-pine)">7:45 PM</b><span class="a-label">Spring closes</span></div><div><b style="display:block;font-family:var(--display);font-size:25px;color:var(--app-pine)">Fri</b><span class="a-label">Open to midnight</span></div></div></div></div>
+<div class="stack" style="gap:11px"><div class="pad sec-head" style="margin:0"><h3 class="a-h3">Your plan today</h3><button class="link" data-go="trip">Full trip</button></div>
+<div class="pad"><div class="timeline">
+<div class="tl now"><span class="t">5:00 PM</span><div class="a-h3">Massage · 50 min</div><span class="a-meta">Terme di Saturnia Spa · Confirmed</span></div>
+<div class="tl"><span class="t">8:00 PM</span><div class="a-h3">Dinner at the 1919 Restaurant</div><span class="a-meta">Table for 2 · Confirmed</span></div>
+<div class="tl sug"><span class="t">Suggested</span><div class="a-h3">Friday night soak under the stars?</div><button class="pill sand" data-book="night" style="margin-top:4px">Reserve a time</button></div></div></div></div>
+<div class="pad"><button class="card" data-book="ritual" style="width:100%;text-align:left;display:flex;gap:12px;align-items:center;padding:12px;background:var(--app-sand);border-color:transparent"><span class="thumb t-spa" style="width:54px;height:54px;display:grid;place-items:center;color:#fff;font-family:var(--display);font-size:26px;font-weight:600">R</span><span style="flex:1"><span class="a-label">New · in the Spring Park</span><span style="display:block;font-family:var(--display);font-size:20px;font-weight:600;line-height:1.1;margin-top:2px">Rituals Sauna</span><span class="a-meta">Aufguss rituals and sauna ceremonies</span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button></div>
+<div class="stack" style="gap:11px"><div class="pad sec-head" style="margin:0"><h3 class="a-h3">Quick actions</h3></div>
+<div class="pad qgrid">
+<button class="qa" data-go="spa"><i><svg width="18" height="18"><use href="#i-drop"/></svg></i>Spa &amp; treatments</button>
+<button class="qa" data-book="golf"><i><svg width="18" height="18"><use href="#i-sun"/></svg></i>Book a tee time</button>
+<button class="qa" data-go="dining"><i><svg width="18" height="18"><use href="#i-fork"/></svg></i>Dine &amp; reserve</button>
+<button class="qa" data-go="chat"><i><svg width="18" height="18"><use href="#i-chat"/></svg></i>Ask concierge</button></div></div>
+</div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="explore"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Explore</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px">
+<div class="chips"><button class="chip" data-chip aria-pressed="true">All</button><button class="chip" data-chip aria-pressed="false">Thermal</button><button class="chip" data-chip aria-pressed="false">Spa</button><button class="chip" data-chip aria-pressed="false">Golf</button><button class="chip" data-chip aria-pressed="false">Active</button><button class="chip" data-chip aria-pressed="false">Dining</button></div>
+<div class="pad"><button class="thumb t-spring" data-go="spring" style="width:100%;height:178px;display:block"><svg viewBox="0 0 374 178" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#E6F2F9" stroke-width="1.1" opacity=".5"><ellipse cx="260" cy="110" rx="50" ry="16"/><ellipse cx="260" cy="110" rx="86" ry="28"/><ellipse cx="260" cy="110" rx="124" ry="42"/></g><g fill="none" stroke="#fff" stroke-width="1.4" opacity=".35" stroke-linecap="round"><path d="M235 80c-10-14 10-22 0-38"/><path d="M265 82c-10-14 10-22 0-40"/><path d="M295 80c-10-14 10-22 0-38"/></g></svg>
+<span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:14px;text-align:left"><span style="display:flex;gap:6px"><span class="pill" style="background:rgba(255,255,255,.92)">Since Roman times</span><span class="pill" style="background:rgba(255,255,255,.92)">37.5°C</span></span>
+<span style="display:flex;align-items:flex-end;gap:12px"><span style="flex:1;color:#fff"><span style="display:block;font-family:var(--display);font-size:27px;font-weight:600;line-height:1.05">The Thermal Spring</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.88);margin-top:3px">Spring, Roman Bath, Casale and Thermal Park</span></span><span class="btn amber sm" style="flex:none">Open</span></span></span></button></div>
+<div class="pad stack" style="gap:9px">
+<button class="row" data-go="spa"><span class="thumb t-spa" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><circle cx="35" cy="31" r="12"/><circle cx="35" cy="31" r="22"/></g></svg></span><span class="row-body"><span class="t">Spa treatments &amp; Private SPA</span><span class="a-meta">Massages, facials, rituals · couples suite</span><span><span class="pill">Spa</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+<button class="row" data-go="golf"><span class="thumb t-golf" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><path d="M-5 44l22-18 18 12 20-22 20 14"/></g></svg></span><span class="row-body"><span class="t">Golf di Terme di Saturnia</span><span class="a-meta">18 holes · par 72 · designed by Ronald Fream</span><span><span class="pill">Tee times</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+<button class="row" data-go="active"><span class="thumb t-active" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><path d="M-5 40c15-10 25 8 40-2s25 6 40-4"/><path d="M-5 50c15-10 25 8 40-2s25 6 40-4"/></g></svg></span><span class="row-body"><span class="t">Active wellness</span><span class="a-meta">E-bikes, yoga, sauna rituals, guided walk</span><span><span class="pill sand">Included in your stay</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+<button class="row" data-book="night"><span class="thumb t-night" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><circle cx="35" cy="31" r="12"/><circle cx="35" cy="31" r="22"/></g></svg></span><span class="row-body"><span class="t">Friday night soak</span><span class="a-meta">Spring open until midnight</span><span><span class="pill clay">Fridays</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+<button class="row" data-go="dining"><span class="thumb t-dine" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><path d="M-5 40c15-10 25 8 40-2s25 6 40-4"/><path d="M-5 50c15-10 25 8 40-2s25 6 40-4"/></g></svg></span><span class="row-body"><span class="t">Restaurants &amp; bar</span><span class="a-meta">1919 Restaurant · La Stellata · Drink &amp; Food Library</span><span><span class="pill">Dining</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+<button class="row" data-go="chat"><span class="thumb t-active" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><path d="M-5 44l22-18 18 12 20-22 20 14"/></g></svg></span><span class="row-body"><span class="t">Maremma excursions</span><span class="a-meta">Cascate del Mulino · Pitigliano · horse riding</span><span><span class="pill sand">With the concierge</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+</div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="spring"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="explore" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">The Thermal Spring</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" style="gap:18px">
+<div class="thumb t-spring" style="width:100%;height:140px;display:block"><svg viewBox="0 0 374 140" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".45"><path d="M-5 80c60-26 100 18 150-8s110 14 230-20"/><path d="M-5 100c60-26 100 18 150-8s110 14 230-20"/></g></svg><span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff"><span class="a-label" style="color:rgba(255,255,255,.8)">Since Roman times</span><span style="font-family:var(--display);font-size:27px;font-weight:600;line-height:1.05">The Thermal Spring</span><span style="font-size:12px;color:rgba(255,255,255,.88);margin-top:2px">Natural spring, outdoor pools and vascular path</span></span></div>
+<div class="stats"><div class="stat"><span class="a-label">Water</span><b>37.5°C</b></div><div class="stat"><span class="a-label">Fridays</span><b>To midnight</b></div></div>
+<p style="font-size:13.5px;line-height:1.55;color:var(--app-ink-2)">A 3,000-year-old spring feeds the natural pool, the outdoor thermal pools, hydromassage jets and the vascular path. Rich in antioxidant properties, the water stays close to body temperature all year.</p>
+<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Opening hours today</span>
+<div class="hrow"><b>Spring, Roman Bath, sauna &amp; steam</b><span class="h">7:30 AM – 7:45 PM</span></div>
+<div class="hrow"><b>Casale · relax rooms &amp; Finnish sauna</b><span class="h">9:30 AM – 7:00 PM</span></div>
+<div class="hrow"><b>Thermal Park · pools &amp; panoramic sauna</b><span class="h">9:30 AM – 7:00 PM</span></div>
+<div class="hrow"><b>Friday night · the Spring</b><span class="h">Until midnight</span></div></div>
+<div class="quote">Dress code is pure white. Bring your own robe and towels, or collect them at reception, included in your stay.<span class="who">Terme di Saturnia</span></div>
+<button class="btn amber" data-book="night">Reserve a Friday night soak</button>
+<div class="card" style="display:flex;gap:12px;align-items:center"><div style="flex:1"><div class="a-h3">Bring a friend for the day</div><span class="a-meta">Thermal Park from €30 · Club from €90</span></div><button class="btn sm" style="width:auto" data-toast="Guest pass link sent to your phone">Send pass</button></div>
+</div></div></section>
+<section class="view" data-view="spa"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="explore" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Spa &amp; Private SPA</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" style="gap:16px">
+<div class="seg"><button data-spa="spa" aria-pressed="true">Treatments</button><button data-spa="private" aria-pressed="false">Private SPA</button></div>
+<div id="spa-body" class="stack" style="gap:16px"></div>
+<button class="btn amber" data-book="current">Choose a time</button>
+</div></div></section>
+<section class="view" data-view="golf"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="explore" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Golf</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" style="gap:16px">
+<div class="thumb t-golf" style="width:100%;height:140px;display:block"><svg viewBox="0 0 374 140" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".45"><path d="M-5 100c50-30 90 10 140-14s120 12 240-22"/><circle cx="290" cy="40" r="22"/><circle cx="290" cy="40" r="36"/></g></svg><span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff"><span class="a-label" style="color:rgba(255,255,255,.8)">GEO certified</span><span style="font-family:var(--display);font-size:27px;font-weight:600;line-height:1.05">Golf di Terme di Saturnia</span><span style="font-size:12px;color:rgba(255,255,255,.88);margin-top:2px">Championship course in the Maremma countryside</span></span></div>
+<div class="stats"><div class="stat"><span class="a-label">Layout</span><b>18 · par 72</b></div><div class="stat"><span class="a-label">Length</span><b>6,316 m</b></div><div class="stat"><span class="a-label">Architect</span><b style="font-size:19px">Ronald Fream</b></div><div class="stat"><span class="a-label">Practice</span><b>43 stations</b></div></div>
+<p style="font-size:13.5px;line-height:1.55;color:var(--app-ink-2)">Lakes, streams and sculpted fairway bunkers across 70 hectares. A driving range with 34 open and 9 covered bays (3 heated in winter), putting and pitching greens, and PGA-qualified instructors. Lunch at La Stellata, in the historic farmhouse.</p>
+<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Included for resort guests</span><div class="list-item"><svg width="18" height="18"><use href="#i-check"/></svg>Golf driving range</div><div class="list-item"><svg width="18" height="18"><use href="#i-check"/></svg>Tournament calendar and golf clinics</div></div>
+<button class="btn amber" data-book="golf">Book a tee time</button><button class="btn outline" data-toast="Golf clinic request sent to the clubhouse">Request a golf clinic</button>
+</div></div></section>
+<section class="view" data-view="active"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="explore" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Active wellness</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" style="gap:16px">
+<div class="thumb t-active" style="width:100%;height:120px;display:block"><svg viewBox="0 0 374 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><path d="M-5 90c15-10 25 8 40-2s25 6 40-4"/><path d="M-5 50c15-10 25 8 40-2s25 6 40-4"/></g></svg><span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff"><span style="font-family:var(--display);font-size:27px;font-weight:600;line-height:1.05">Active wellness</span><span style="font-size:12px;color:rgba(255,255,255,.88);margin-top:2px">Included in every stay</span></span></div>
+<div class="stack" style="gap:9px">
+<button class="row" data-book="ebike"><span class="thumb t-active" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><path d="M-5 40c15-10 25 8 40-2s25 6 40-4"/><path d="M-5 50c15-10 25 8 40-2s25 6 40-4"/></g></svg></span><span class="row-body"><span class="t">E-bikes</span><span class="a-meta">Free rental, up to 2 hours · maps or guided tours</span><span><span class="pill">Included</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+<button class="row" data-book="ritual"><span class="thumb t-spa" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><circle cx="35" cy="31" r="12"/><circle cx="35" cy="31" r="22"/></g></svg></span><span class="row-body"><span class="t">Rituals Sauna</span><span class="a-meta">Aufguss rituals and sauna ceremonies</span><span><span class="pill sand">Book a ritual</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+<button class="row" data-book="yoga"><span class="thumb t-spring" style="width:70px;height:62px"><svg viewBox="0 0 70 62" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1" opacity=".5"><circle cx="35" cy="31" r="12"/><circle cx="35" cy="31" r="22"/></g></svg></span><span class="row-body"><span class="t">Group yoga</span><span class="a-meta">Movement and breathing, with the guided morning walk</span><span><span class="pill">Included</span></span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>
+</div>
+<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Always open to you</span><div class="list-item"><svg width="18" height="18"><use href="#i-check"/></svg>Gym, open 24/7</div><div class="list-item"><svg width="18" height="18"><use href="#i-check"/></svg>Tennis court</div><div class="list-item"><svg width="18" height="18"><use href="#i-check"/></svg>Guided walk every morning<button class="pill" data-toast="You're on tomorrow's morning walk" style="margin-left:auto">Join</button></div></div>
+</div></div></section>
+<section class="view" data-view="slots"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="explore" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2" id="slots-title">Book</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="slots-body" style="gap:18px"></div></div></section>
+<section class="view" data-view="checkout"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="slots" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Checkout</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="checkout-body" style="gap:16px"></div></div></section>
+<section class="view" data-view="confirmed"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="app-scroll stack" style="gap:18px;padding:14px 0 18px"><div class="pad stack" id="confirmed-body" style="gap:18px;text-align:center"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="pass"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="confirmed" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Thermal pass</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="pass-body" style="gap:16px;text-align:center"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="dining"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Dining</h2></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" style="gap:16px">
+<div class="seg"><button data-seg data-dine="1919" aria-pressed="true">1919</button><button data-seg data-dine="stellata" aria-pressed="false">La Stellata</button><button data-seg data-dine="bar" aria-pressed="false">Bar</button></div>
+<div id="dine-body" class="stack" style="gap:16px"></div>
+</div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="chat"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><div style="margin-right:auto"><h2 class="a-h2">Concierge</h2><span class="a-meta" style="display:flex;align-items:center;gap:5px"><i style="width:7px;height:7px;border-radius:50%;background:#5C8A4F;display:inline-block"></i>Online · a person is one tap away</span></div><button class="icon-btn" aria-label="Call"><svg width="18" height="18"><use href="#i-phone"/></svg></button></div>
+<div class="app-scroll stack" id="msgs" style="gap:10px;padding:6px 20px 12px"></div>
+<div class="chips" id="sugg" style="padding-bottom:6px"></div>
+<form id="chat-form" style="flex:none;display:flex;gap:9px;padding:6px 16px 12px"><input id="chat-inp" autocomplete="off" placeholder="Ask anything…" style="flex:1;min-width:0;border:1px solid var(--app-line);background:var(--app-surface);border-radius:14px;padding:11px 14px;font:inherit;font-size:13.5px;color:var(--app-ink);outline:none"><button class="icon-btn" style="background:var(--app-pine);color:#fff;border:0;width:44px;height:44px;border-radius:14px" aria-label="Send"><svg width="18" height="18"><use href="#i-send"/></svg></button></form>
+<nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="trip"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">My trip</h2><button class="icon-btn" data-go="explore" aria-label="Add"><svg width="18" height="18"><use href="#i-plus"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" style="gap:16px">
+<div class="week" style="width:100%"><button class="day" data-day aria-pressed="true">Tue<b>13</b></button><button class="day" data-day aria-pressed="false">Wed<b>14</b></button><button class="day" data-day aria-pressed="false">Thu<b>15</b></button><button class="day" data-day aria-pressed="false">Fri<b>16</b></button><button class="day" data-day aria-pressed="false">Sat<b>17</b></button></div>
+<div class="timeline" id="trip-body"></div>
+<div class="card" style="display:flex;gap:12px;align-items:center"><div style="flex:1"><div class="a-h3">Express check-out</div><span class="a-meta">Sat 11 AM · skip the desk</span></div><button class="btn sm" style="width:auto">Set up</button></div>
+</div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="stay"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">My stay</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" style="gap:18px">
+<div class="card hero-pine" style="border:0"><span class="a-label" style="color:rgba(255,255,255,.7)">Reservation TS-60418</span><div style="font-family:var(--display);font-size:27px;font-weight:600;margin-top:3px;line-height:1.1">Garden Junior Suite 128</div><div style="font-size:12px;color:rgba(255,255,255,.78)">Oct 13 – 17 · 2 guests · Saturnia, Manciano (GR)</div></div>
+<div class="stats"><div class="stat"><span class="a-label">Room charges</span><b id="stay-charges">€ 130</b></div><div class="stat"><span class="a-label">Bookings</span><b id="stay-count">2</b></div></div>
+<div class="card" style="padding:4px 14px"><button class="list-item"><svg width="18" height="18"><use href="#i-key"/></svg>Digital room key<span class="v">Active</span></button><div class="list-item"><svg width="18" height="18"><use href="#i-sun"/></svg>Check-in / check-out<span class="v">3 PM / 11 AM</span></div><div class="list-item"><svg width="18" height="18"><use href="#i-drop"/></svg>Robe, towel &amp; slippers<span class="v">Collect at reception</span></div><div class="list-item"><svg width="18" height="18"><use href="#i-bell"/></svg>Activity reminders<button class="switch" data-switch aria-pressed="true" aria-label="Reminders"></button></div><button class="list-item" data-go="chat"><svg width="18" height="18"><use href="#i-chat"/></svg>Late check-out, extra pillows, transfers<span class="v">›</span></button></div>
+<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn" style="background:var(--app-mint)"><svg width="18" height="18"><use href="#i-phone"/></svg></span><div style="flex:1"><div class="a-h3">Prefer to talk?</div><span class="a-meta">Concierge · +39 0564 600809</span></div></div>
+</div></div><nav class="tabbar" data-tabbar></nav></section>
+</div></div></div><div class="stage-hint"><span class="dot"></span>Everything is clickable: pick a time, add extras, check out, ask the concierge. Arrow keys switch screens.</div></main>
+<aside class="notes"><span class="eyebrow" id="n-group"></span><h2 id="n-title"></h2><p id="n-lede" style="font-size:13.5px;color:var(--muted);line-height:1.5"></p><ul class="n-list" id="n-list"></ul>
+<div class="n-why"><span class="eyebrow">Why it matters for Terme di Saturnia</span><p id="n-why"></p></div>
+<div class="n-nav"><button id="prev"><svg width="15" height="15"><use href="#i-left"/></svg>Previous</button><button id="next">Next<svg width="15" height="15"><use href="#i-right"/></svg></button></div>
+<p class="n-foot">Concept prototype, not a live product. Prices, times, availability and guest details are illustrative. Facilities, hours and services are based on Terme di Saturnia's public information. In production this connects to the resort's reservation, spa and room-billing systems.</p></aside></div>
+<script>(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+var LANG=((new URLSearchParams(location.search).get("lang")||"it").toLowerCase()==="en")?"en":"it";
+var DICT={
+"Saturnia Guest App":"App ospiti Saturnia",
+"Concept prototype · a branded guest app for Terme di Saturnia Spa & Golf Resort":"Prototipo concettuale · un'app per gli ospiti di Terme di Saturnia Spa & Golf Resort",
+"Clickable":"Cliccabile","15 screens":"15 schermate",
+"Arrival":"Arrivo","Welcome":"Benvenuto","Today":"Oggi","Discover":"Scopri","Explore":"Esplora","Thermal spring":"Sorgente termale","Spa & Private SPA":"Spa e Private SPA","Golf":"Golf","Active wellness":"Active wellness","Book without calling":"Prenota senza telefonare","Pick a time":"Scegli l'orario","Checkout":"Pagamento","Confirmed":"Confermato","Thermal pass":"Pass termale","On property":"In resort","Dining":"Ristoranti","Concierge":"Concierge","My trip":"Programma","My stay":"Il mio soggiorno","Stay":"Soggiorno",
+"Everything is clickable: pick a time, add extras, check out, ask the concierge. Arrow keys switch screens.":"Tutto è cliccabile: scegli l'orario, aggiungi extra, paga, scrivi al concierge. Le frecce della tastiera cambiano schermata.",
+"Terme di Saturnia · Maremma, Tuscany":"Terme di Saturnia · Maremma, Toscana",
+"The spring, the spa and the course, in your pocket.":"La sorgente, la spa e il campo da golf, nel tuo telefono.",
+"Book a massage, a tee time or a moonlit soak, reserve dinner, or message the concierge. No phone calls, no waiting for a reply.":"Prenota un massaggio, un tee time o un bagno al chiaro di luna, riserva la cena o scrivi al concierge. Niente telefonate, niente attese.",
+"37.5°C":"37,5°C","natural spring":"sorgente naturale","rooms & suites":"camere e suite","of Maremma park":"di parco maremmano","Add my reservation":"Aggiungi la mia prenotazione","Sign in":"Accedi","Use the reservation number from your confirmation email":"Usa il numero di prenotazione della tua email di conferma",
+"Tuesday, Oct 13 · 17°C":"Martedì 13 ottobre · 17°C","Garden Junior Suite 128":"Junior Suite Giardino 128","Oct 13 – 17 · 2 guests · check-out Sat 11 AM":"13 – 17 ott · 2 ospiti · check-out sab ore 11","Unlock door":"Apri la porta","Stay details":"Dettagli del soggiorno","Spring water":"Acqua della sorgente","7:45 PM":"19:45","Spring closes":"La sorgente chiude","Open to midnight":"Aperta fino a mezzanotte","Your plan today":"Il tuo programma di oggi","Full trip":"Tutto il programma","5:00 PM":"17:00","Massage · 50 min":"Massaggio · 50 min","Terme di Saturnia Spa · Confirmed":"Terme di Saturnia Spa · Confermato","8:00 PM":"20:00","Dinner at the 1919 Restaurant":"Cena al Ristorante 1919","Table for 2 · Confirmed":"Tavolo per 2 · Confermato","Suggested":"Consigliato","Friday night soak under the stars?":"Un bagno sotto le stelle venerdì sera?","Reserve a time":"Scegli un orario","New · in the Spring Park":"Novità · nel Parco della Sorgente","Aufguss rituals and sauna ceremonies":"Rituali Aufguss e cerimonie in sauna","Quick actions":"Azioni rapide","Spa & treatments":"Spa e trattamenti","Book a tee time":"Prenota un tee time","Dine & reserve":"Ristoranti e prenotazioni","Ask concierge":"Scrivi al concierge",
+"All":"Tutto","Thermal":"Termale","Active":"Active","Since Roman times":"Dai tempi dei Romani","The Thermal Spring":"La Sorgente Termale","Spring, Roman Bath, Casale and Thermal Park":"Sorgente, Bagno Romano, Casale e Parco Termale","Open":"Apri","Spa treatments & Private SPA":"Trattamenti spa e Private SPA","Massages, facials, rituals · couples suite":"Massaggi, trattamenti viso, rituali · suite per coppie","18 holes · par 72 · designed by Ronald Fream":"18 buche · par 72 · disegnato da Ronald Fream","Tee times":"Tee time","E-bikes, yoga, sauna rituals, guided walk":"E-bike, yoga, rituali in sauna, camminata guidata","Included in your stay":"Incluso nel soggiorno","Friday night soak":"Bagno del venerdì sera","Spring open until midnight":"Sorgente aperta fino a mezzanotte","Fridays":"Venerdì","Restaurants & bar":"Ristoranti e bar","1919 Restaurant · La Stellata · Drink & Food Library":"Ristorante 1919 · La Stellata · Drink & Food Library","Maremma excursions":"Escursioni in Maremma","Cascate del Mulino · Pitigliano · horse riding":"Cascate del Mulino · Pitigliano · passeggiate a cavallo","With the concierge":"Con il concierge",
+"Natural spring, outdoor pools and vascular path":"Sorgente naturale, piscine all'aperto e percorso vascolare","Water":"Acqua","To midnight":"Fino a mezzanotte",
+"A 3,000-year-old spring feeds the natural pool, the outdoor thermal pools, hydromassage jets and the vascular path. Rich in antioxidant properties, the water stays close to body temperature all year.":"Una sorgente con 3.000 anni di storia alimenta la vasca naturale, le piscine termali all'aperto, gli idromassaggi e il percorso vascolare. Ricca di proprietà antiossidanti, l'acqua resta vicina alla temperatura corporea tutto l'anno.",
+"Opening hours today":"Orari di oggi","Spring, Roman Bath, sauna & steam":"Sorgente, Bagno Romano, sauna e bagno turco","7:30 AM – 7:45 PM":"7:30 – 19:45","Casale · relax rooms & Finnish sauna":"Casale · stanze relax e sauna finlandese","9:30 AM – 7:00 PM":"9:30 – 19:00","Thermal Park · pools & panoramic sauna":"Parco Termale · piscine e sauna panoramica","Friday night · the Spring":"Venerdì sera · la Sorgente","Until midnight":"Fino a mezzanotte",
+"Dress code is pure white. Bring your own robe and towels, or collect them at reception, included in your stay.":"Il dress code è total white. Porta il tuo accappatoio e i tuoi teli, oppure ritirali alla reception: sono inclusi nel soggiorno.",
+"Reserve a Friday night soak":"Prenota il bagno del venerdì sera","Bring a friend for the day":"Invita un amico per la giornata","Thermal Park from €30 · Club from €90":"Parco Termale da €30 · Club da €90","Send pass":"Invia il pass",
+"Treatments":"Trattamenti","Spa treatments":"Trattamenti spa","Face, body and rituals":"Viso, corpo e rituali",
+"A new skin to wear a new soul: treatments tailored to you, with 53 treatment cabins. Massages run 20 to 50 minutes.":"Una pelle nuova per vestire una nuova anima: trattamenti su misura, in 53 cabine. I massaggi durano da 20 a 50 minuti.",
+"Signature treatments":"Trattamenti signature","Customised for balance and renewal":"Su misura per equilibrio e rinnovamento","Facials":"Trattamenti viso","Active Beauty line with thermal water and algae":"Linea Active Beauty con acqua termale e alghe","Massages":"Massaggi","20 to 50 minute options":"Da 20 a 50 minuti","Vacuum massage for muscle fatigue and tension":"Massaggio a vuoto per stanchezza e tensioni muscolari","Body-molding with fossil powders and essential oils":"Modellante corpo con polveri fossili e oli essenziali","Treatments inspired by the local territory":"Trattamenti ispirati al territorio","Choose a time":"Scegli un orario","Room 306 · for couples":"Camera 306 · per coppie",
+"Room 306 is a private suite for couples: an intimate sensory bath and a scrub, with an optional couples massage.":"La Camera 306 è una suite privata per coppie: un intimo bagno sensoriale e uno scrub, con massaggio di coppia facoltativo.",
+"50 minutes":"50 minuti","Sensory bath and scrub":"Bagno sensoriale e scrub","80 minutes":"80 minuti","Bath, scrub and a 20-minute couples massage":"Bagno, scrub e massaggio di coppia di 20 minuti","100 minutes":"100 minuti","Bath, scrub and a 50-minute couples massage":"Bagno, scrub e massaggio di coppia di 50 minuti",
+"GEO certified":"Certificato GEO","Championship course in the Maremma countryside":"Percorso da campionato nella campagna maremmana","Layout":"Percorso","Length":"Lunghezza","6,316 m":"6.316 m","Architect":"Architetto","Practice":"Campo pratica","43 stations":"43 postazioni",
+"Lakes, streams and sculpted fairway bunkers across 70 hectares. A driving range with 34 open and 9 covered bays (3 heated in winter), putting and pitching greens, and PGA-qualified instructors. Lunch at La Stellata, in the historic farmhouse.":"Laghetti, ruscelli e grandi bunker scolpiti nei fairway su 70 ettari. Un driving range con 34 postazioni scoperte e 9 coperte (3 riscaldate in inverno), putting e pitching green, e istruttori qualificati PGA. Pranzo a La Stellata, nel casale storico.",
+"Included for resort guests":"Incluso per gli ospiti del resort","Golf driving range":"Driving range","Tournament calendar and golf clinics":"Calendario gare e golf clinic","Request a golf clinic":"Richiedi una golf clinic",
+"Included in every stay":"Incluso in ogni soggiorno","E-bikes":"E-bike","Free rental, up to 2 hours · maps or guided tours":"Noleggio gratuito, fino a 2 ore · mappe o tour guidati","Included":"Incluso","Book a ritual":"Prenota un rituale","Group yoga":"Yoga di gruppo","Movement and breathing, with the guided morning walk":"Movimento e respiro, con la camminata guidata del mattino","Always open to you":"Sempre a tua disposizione","Gym, open 24/7":"Palestra, aperta 24 ore su 24","Tennis court":"Campo da tennis","Guided walk every morning":"Camminata guidata ogni mattina","Join":"Partecipa",
+"Book treatment":"Prenota un trattamento","Book Private SPA":"Prenota Private SPA","Book tee time":"Prenota un tee time","Book night soak":"Prenota il bagno serale","Book e-bike":"Prenota un'e-bike","Book sauna ritual":"Prenota un rituale in sauna","Book yoga":"Prenota yoga",
+"Mon":"Lun","Tue":"Mar","Wed":"Mer","Thu":"Gio","Fri":"Ven","Sat":"Sab","Sun":"Dom",
+"Option":"Opzione","18 holes":"18 buche","9 holes":"9 buche","Lesson with a PGA instructor":"Lezione con istruttore PGA","Guests":"Ospiti","Couples":"Coppie","Add extras":"Aggiungi extra","Club rental":"Noleggio mazze","Range balls":"Palline da driving range","Total":"Totale","Duration":"Durata",
+"Relaxing massage":"Massaggio rilassante","Thermal facial":"Trattamento viso termale","LPG vacuum massage":"Massaggio LPG","Calco Modellante body treatment":"Trattamento corpo Calco Modellante","Thermal tea ritual":"Rituale del tè termale","Prosecco & Tuscan bites":"Prosecco e assaggi toscani","Prosecco & bites":"Prosecco e stuzzichini","Free e-bike rental":"Noleggio e-bike gratuito","Guided e-bike tour":"Tour guidato in e-bike","Picnic basket":"Cestino da picnic","Thermal tea":"Tè termale","Mat & towel":"Tappetino e telo","Spa treatment":"Trattamento spa","E-bike":"E-bike","Rituals Sauna":"Rituals Sauna",
+"Pay with":"Paga con","Charge to Room 128":"Addebita sulla camera 128","Settled at check-out":"Saldo al check-out","Saved card":"Carta salvata","Free cancellation up to 4 hours before.":"Cancellazione gratuita fino a 4 ore prima.","Confirm & pay":"Conferma e paga","Confirm booking":"Conferma la prenotazione","No payment needed.":"Nessun pagamento necessario.","Continue":"Continua",
+"You're booked.":"Prenotazione confermata.","Reservation TS-60418 · also sent to your email":"Prenotazione TS-60418 · inviata anche per email","4 min walk from Suite 128":"4 minuti a piedi dalla Suite 128","Directions":"Indicazioni","Remind me 1 hour before":"Ricordamelo 1 ora prima",
+"Arrive 10 minutes early. For the thermal areas, remember the pure-white dress code: robe and towels are at reception.":"Arriva 10 minuti prima. Per le aree termali ricorda il dress code total white: accappatoio e teli sono alla reception.",
+"Show thermal pass":"Mostra il pass termale","See my trip":"Vedi il mio programma","Show this at the entrance. Staff scan it, no paper vouchers.":"Mostralo all'ingresso. Il personale lo scansiona, niente voucher cartacei.","Send to my partner":"Invia al mio partner",
+"1919 Restaurant":"Ristorante 1919","Lounge and bar overlooking the water":"Lounge bar con vista sull'acqua","Reserve a seat":"Prenota un posto","Add to my plan":"Aggiungi al mio programma","Hours & details":"Orari e dettagli","10:00 AM – midnight":"10:00 – mezzanotte","Kitchen":"Cucina","12:00 – 10:00 PM":"12:00 – 22:00","Tuscan cuisine in the heart of the resort":"Cucina toscana nel cuore del resort","Reserve a table":"Prenota un tavolo","Breakfast":"Colazione","7:30 – 11:00 AM":"7:30 – 11:00","Light lunch":"Pranzo leggero","12:30 – 2:30 PM":"12:30 – 14:30","Dinner":"Cena","7:30 – 10:30 PM":"19:30 – 22:30","Country restaurant in a historic farmhouse, overlooking the golf course":"Country restaurant in un casale storico, con vista sul campo da golf","Ask the concierge":"Chiedi al concierge","Setting":"Ambiente","Traditional Tuscan trattoria":"Trattoria toscana tradizionale","View":"Vista","Over the golf course":"Sul campo da golf","Included in":"Incluso in","Dinner Included offer":"Offerta Cena Inclusa",
+"Online · a person is one tap away":"Online · una persona è a un tocco di distanza","What should I bring?":"Cosa devo portare?","Where can I eat tonight?":"Dove posso cenare stasera?","Talk to a person":"Parla con una persona","Ask anything…":"Chiedi qualsiasi cosa…",
+"Book a treatment":"Prenota un trattamento","Book a Friday night soak":"Prenota il bagno del venerdì sera","Book an e-bike":"Prenota un'e-bike","See dining":"Vedi ristoranti","Open My trip":"Apri il mio programma",
+"Spa · Confirmed":"Spa · Confermato","Pending: tee time held":"In attesa: tee time riservato","Express check-out":"Check-out express","Sat 11 AM · skip the desk":"sab ore 11 · senza passare dalla reception","Set up":"Attiva","Just booked":"Appena prenotato","Book":"Prenota","Private SPA · Room 306":"Private SPA · Camera 306","Thu 9:30 AM":"gio 9:30",
+"Reservation TS-60418":"Prenotazione TS-60418","Oct 13 – 17 · 2 guests · Saturnia, Manciano (GR)":"13 – 17 ott · 2 ospiti · Saturnia, Manciano (GR)","Room charges":"Addebiti in camera","Bookings":"Prenotazioni","Digital room key":"Chiave digitale","Check-in / check-out":"Check-in / check-out","3 PM / 11 AM":"15:00 / 11:00","Robe, towel & slippers":"Accappatoio, telo e ciabattine","Collect at reception":"Ritiro alla reception","Activity reminders":"Promemoria attività","Late check-out, extra pillows, transfers":"Late check-out, cuscini extra, transfer","Prefer to talk?":"Preferisci parlare?",
+"Notifications":"Notifiche","Back":"Indietro","Fewer":"Meno","More":"Di più","Reminder":"Promemoria","Thermal pass QR code":"Codice QR del pass termale","Call":"Chiama","Send":"Invia","Add":"Aggiungi","Reminders":"Promemoria",
+"Guest pass link sent to your phone":"Link del pass ospite inviato al tuo telefono","Golf clinic request sent to the clubhouse":"Richiesta di golf clinic inviata al club house","You're on tomorrow's morning walk":"Sei iscritto alla camminata di domani mattina","Done. We have noted it for you.":"Fatto. Lo abbiamo annotato per te."
+};
+function tr(s){if(LANG!=="it")return s;var k=s.trim();if(!k)return s;if(Object.prototype.hasOwnProperty.call(DICT,k))return s.replace(k,DICT[k]);if(k.indexOf("Table request sent to ")===0)return s.replace(k,"Richiesta di tavolo inviata a "+tr(k.slice(22)));return s}
+function tt(s){return tr(String(s))}
+function to24(s){return s.replace(/(\d{1,2}):(\d{2}) ?(AM|PM)/g,function(m,h,mm,ap){return ((+h%12)+(ap==="PM"?12:0))+":"+mm})}
+function ft(s){return LANG==="it"?to24(s):s}
+function nstr(n){return LANG==="it"?String(n).replace(".",","):String(n)}
+var L=function(en,it){return LANG==="it"?it:en};
+var TEXT_ROOTS=".screen,.rail,.topbar,.stage-hint";
+function applyEl(root){
+ if(root.nodeType===3){if(root.__en===undefined)root.__en=root.nodeValue;var v=LANG==="it"?tr(root.__en):root.__en;if(root.nodeValue!==v)root.nodeValue=v;return}
+ if(root.nodeType!==1||/SCRIPT|STYLE/.test(root.tagName))return;
+ var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,list=[];while(n=w.nextNode())list.push(n);list.forEach(function(t){applyEl(t)});
+ var els=root.querySelectorAll?[].slice.call(root.querySelectorAll("[placeholder],[aria-label],[title]")):[];if(root.hasAttribute&&(root.hasAttribute("placeholder")||root.hasAttribute("aria-label")||root.hasAttribute("title")))els.push(root);
+ els.forEach(function(e){["placeholder","aria-label","title"].forEach(function(a){var v=e.getAttribute(a);if(v===null)return;var k="en"+a.replace("-","");if(e.dataset[k]===undefined)e.dataset[k]=v;var nv=LANG==="it"?tr(e.dataset[k]):e.dataset[k];if(nv!==v)e.setAttribute(a,nv)})})}
+function applyAll(){document.querySelectorAll(TEXT_ROOTS).forEach(applyEl)}
+var mo=new MutationObserver(function(muts){muts.forEach(function(m){[].forEach.call(m.addedNodes,function(n){applyEl(n)})})});
+function flush(){mo.takeRecords().forEach(function(m){[].forEach.call(m.addedNodes,function(n){applyEl(n)})})}
+
+var ORDER=["welcome","home","explore","spring","spa","golf","active","slots","checkout","confirmed","pass","dining","chat","trip","stay"];
+var NOTES={
+welcome:{group:"Arrival",title:"Welcome",lede:"The first ten seconds. It sells the promise: the whole resort, no phone calls.",list:["Headline names what guests actually do here: spring, spa and golf.","Three real numbers from the property: 37.5°C spring, 124 rooms and suites, 120 hectares.","Guests join with the reservation number from their confirmation email."],why:"Today booking spans several channels: hotel reservations, the Day Spa portal, the golf clubhouse and WhatsApp. One app puts them behind a single guest login."},
+home:{group:"Arrival",title:"Today",lede:"One screen that answers 'what is happening right now'.",list:["Digital key and stay details at the top.","Live strip with real facts: 37.5°C spring, closing time, Friday midnight opening.","Today's plan mixes confirmed bookings with a suggested add-on.","The new Rituals Sauna is promoted where guests already look."],why:"Guests who see the Friday midnight opening are guests who book it. Today they have to find it on a page or ask."},
+explore:{group:"Discover",title:"Explore",lede:"Everything on the property in one list, grouped the way guests think.",list:["The thermal spring leads, as the signature experience.","Spa, golf, active wellness and dining each open their own page.","Maremma excursions hand off to the concierge chat."],why:"The resort has many experiences spread over several websites. A guest who sees them all in one place books more of them."},
+spring:{group:"Discover",title:"The Thermal Spring",lede:"Hours for every thermal area, the dress code and a Friday night soak.",list:["Real opening hours per area, so guests plan their day.","The pure-white dress code and the included robe and towels are stated before guests ask.","Friday night soak is bookable here.","A guest can send a day pass to a friend (Thermal Park from €30, Club from €90)."],why:"The spring is the reason people come. Clear hours and a one-tap night soak turn a visit into a ritual and a day pass into new revenue."},
+spa:{group:"Discover",title:"Spa & Private SPA",lede:"Treatments and the Private SPA suite. Tap the tabs.",list:["Treatment families from the public spa menu: facials, massages, LPG, Calco Modellante, body and Maremma Experience.","Private SPA (Room 306) offers 50, 80 and 100 minute packages for couples.","Both open the same booking flow."],why:"The spa has 53 treatment cabins. Booking them in the app, without calling the spa desk, fills quiet slots."},
+golf:{group:"Discover",title:"Golf",lede:"The course, the practice facilities and tee times.",list:["Course facts guests ask about: 18 holes, par 72, 6,316 m, Ronald Fream design, GEO certified.","Practice range with covered and heated bays.","Tee times book through the same flow as the spa."],why:"Tee times are currently booked through the clubhouse. In the app a guest can reserve in seconds and the club sees the full tee sheet."},
+active:{group:"Discover",title:"Active wellness",lede:"The services that are already included in every stay.",list:["Free e-bike rental, group yoga, the guided morning walk, gym and tennis.","The Rituals Sauna is a bookable ritual.","Included services get used more when they are easy to see."],why:"Included services create the sense of value. If guests do not know about them, they do not use them."},
+slots:{group:"Book without calling",title:"Pick a time",lede:"Fully working: change the day, time, guests and extras and watch the total.",list:["Spots left on every slot. A full slot is disabled instead of a dead end.","Options change the price: treatment type, golf format, Private SPA length.","The Friday night soak only opens on Fridays.","Extras such as thermal tea or Prosecco appear at the point of decision."],why:"Guests book in the evening from the room, outside spa desk hours, and the resort captures upsells a phone call would never mention."},
+checkout:{group:"Book without calling",title:"Checkout",lede:"Charge to the room or pay with a wallet, in one tap.",list:["Room charge is the default, so nothing is paid at the desk.","Wallet and saved card also work.","Included services skip payment."],why:"A frictionless payment step turns browsing into booking."},
+confirmed:{group:"Book without calling",title:"Confirmed",lede:"The confirmation, built from the booking just made.",list:["Reservation number, time, party size and walking time.","One-tap reminder before the appointment.","Straight on to the thermal pass."],why:"Fewer no-shows means fuller treatment cabins, and guests arrive knowing what to expect."},
+pass:{group:"Book without calling",title:"Thermal pass",lede:"A QR code staff scan at the entrance.",list:["No paper vouchers and no desk lookup.","Shows treatment, time and party size so the therapist can greet the guest."],why:"It removes the front-desk step and gives the resort a clean record of who actually showed up."},
+dining:{group:"On property",title:"Dining",lede:"1919 Restaurant, La Stellata and the bar, with real hours. Tap the tabs.",list:["Breakfast, lunch and dinner hours for the 1919 Restaurant.","La Stellata sits in the farmhouse overlooking the golf course.","The Drink & Food Library bar is open until midnight."],why:"Dinner is part of several packages. Making the reservation one tap away raises dining uptake."},
+chat:{group:"On property",title:"Concierge",lede:"Type a question: it answers and offers to book. Try 'what should I bring' or 'tee time'.",list:["Replaces phone calls and WhatsApp threads with one record.","Action buttons inside replies open the booking flow.","A person is always one tap away."],why:"The resort already takes bookings by phone and WhatsApp. Chat keeps that convenience but books straight into the schedule."},
+trip:{group:"On property",title:"My trip",lede:"Every booking, dining and tour on one timeline. Anything just booked appears here.",list:["Confirmed items are solid, pending ones dashed.","Express check-out is offered on the same screen."],why:"A guest with a full itinerary stays on property and spends more."},
+stay:{group:"On property",title:"My stay",lede:"Reservation, charges and service requests.",list:["Room charges update when a booking is charged to the room.","Check-in 3 PM, check-out 11 AM, and where to collect the robe kit.","Requests for late check-out and transfers go straight to staff."],why:"Fewer calls to the desk and a smoother check-out."}
+};
+var TABS=[
+{id:"home",label:"Today",icon:"i-home",match:["home"]},
+{id:"explore",label:"Explore",icon:"i-compass",match:["explore","spring","spa","golf","active","slots","checkout","confirmed","pass","dining"]},
+{id:"chat",label:"Concierge",icon:"i-chat",match:["chat"]},
+{id:"trip",label:"My trip",icon:"i-cal",match:["trip"]},
+{id:"stay",label:"Stay",icon:"i-user",match:["stay"]}];
+document.querySelectorAll("[data-tabbar]").forEach(function(bar){
+bar.innerHTML=TABS.map(function(t){return '<button class="tab" data-go="'+t.id+'" data-tab="'+t.id+'"><svg><use href="#'+t.icon+'"/></svg>'+t.label+'</button>';}).join("");});
+
+var ACTS={
+spa:{name:"Spa treatment",short:"treatment",price:95,unit:"guest",durs:[20,50],mult:{20:.55,50:1},cap:6,hours:["9:00 AM","11:00 AM","2:00 PM","3:30 PM","5:00 PM","6:30 PM"],vars:[["Relaxing massage",0],["Thermal facial",10],["LPG vacuum massage",-10],["Calco Modellante body treatment",25]],addons:[["Thermal tea ritual",8]],cls:"t-spa",maxQty:2},
+private:{name:"Private SPA · Room 306",short:"Private SPA",price:180,unit:"couple",qty:"Couples",durs:[50,80,100],mult:{50:1,80:1.5,100:2},cap:1,hours:["10:00 AM","12:30 PM","3:00 PM","5:30 PM"],vars:null,addons:[["Prosecco & Tuscan bites",35]],cls:"t-private",maxQty:1},
+golf:{name:"Golf di Terme di Saturnia",short:"tee time",price:120,unit:"player",durs:[270],mult:{270:1},cap:4,hours:["8:00 AM","9:30 AM","11:00 AM","1:00 PM","2:30 PM"],vars:[["18 holes",0],["9 holes",-55],["Lesson with a PGA instructor",-30]],addons:[["Club rental",30],["Range balls",0]],cls:"t-golf",maxQty:4},
+night:{name:"Friday night soak",short:"night soak",price:0,unit:"guest",durs:[90],mult:{90:1},cap:30,days:[3],hours:["8:00 PM","9:00 PM","10:00 PM"],vars:null,addons:[["Prosecco & bites",18]],cls:"t-night"},
+ebike:{name:"E-bike",short:"e-bike",price:0,unit:"guest",durs:[60,120],mult:{60:1,120:1},cap:8,hours:["9:00 AM","11:00 AM","2:00 PM","4:00 PM"],vars:[["Free e-bike rental",0],["Guided e-bike tour",25]],addons:[["Picnic basket",22]],cls:"t-active",maxQty:4},
+ritual:{name:"Rituals Sauna",short:"sauna ritual",price:15,unit:"guest",durs:[45],mult:{45:1},cap:12,hours:["4:00 PM","5:30 PM","7:00 PM"],vars:null,addons:[["Thermal tea",5]],cls:"t-spa"},
+yoga:{name:"Group yoga",short:"yoga",price:0,unit:"guest",durs:[60],mult:{60:1},cap:14,hours:["8:00 AM","10:00 AM","6:00 PM"],vars:null,addons:[["Mat & towel",0]],cls:"t-spring"}
+};
+var DAYS=[["Tue",13],["Wed",14],["Thu",15],["Fri",16],["Sat",17]];
+var B={act:"spa",day:0,hour:"5:00 PM",guests:2,dur:50,vari:0,addons:{},pay:"room",paid:false};
+var extraTrip=[],charged=95,spaTab="spa";
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function money(n){return n===0?tt("Included"):"€ "+nstr(n%1?n.toFixed(2):n)}
+function qtyStr(a,n){return n+" "+(LANG==="it"?(a.qty?(n===1?"coppia":"coppie"):(n===1?"ospite":"ospiti")):(a.qty?(n===1?"couple":"couples"):(n===1?"guest":"guests")))}
+function spots(a,day,h){var s=0,k=a+day+h;for(var i=0;i<k.length;i++)s=(s*31+k.charCodeAt(i))>>>0;var c=ACTS[a].cap;var taken=s%(c+2);return Math.max(0,c-Math.min(taken,c))}
+function total(){var a=ACTS[B.act],vadj=a.vars?a.vars[B.vari][1]:0;var base=Math.max(0,(a.price+(a.price?vadj:(a.vars?a.vars[B.vari][1]:0))))*a.mult[B.dur]*B.guests;var ex=0;Object.keys(B.addons).forEach(function(i){if(B.addons[i])ex+=a.addons[i][1]*B.guests});return Math.round((base+ex)*100)/100}
+function baseTotal(){var a=ACTS[B.act],vadj=a.vars?a.vars[B.vari][1]:0;var p=a.price===0?(vadj>0?vadj:0):(a.price+vadj);return p*a.mult[B.dur]*B.guests}
+function firstDay(a){return a.days?a.days[0]:0}
+function setAct(k){if(B.act===k)return;B.act=k;var a=ACTS[k];B.dur=a.durs[0];B.vari=0;B.addons={};B.hour=a.hours[Math.min(2,a.hours.length-1)];B.day=firstDay(a);B.guests=Math.min(B.guests,a.maxQty||8)}
+function dayLabel(){return dayLabelFor(B.day)}
+function dayLabelFor(i){var d=DAYS[i];return LANG==="it"?({Mon:"lun",Tue:"mar",Wed:"mer",Thu:"gio",Fri:"ven",Sat:"sab",Sun:"dom"})[d[0]]+" "+d[1]+" ott":d[0]+", Oct "+d[1]}
+function total2(){var a=ACTS[B.act];var ex=0;Object.keys(B.addons).forEach(function(i){if(B.addons[i])ex+=a.addons[i][1]*B.guests});return Math.round((baseTotal()+ex)*100)/100}
+
+var SPA={
+spa:{blurb:"A new skin to wear a new soul: treatments tailored to you, with 53 treatment cabins. Massages run 20 to 50 minutes.",items:[["Signature treatments","Customised for balance and renewal"],["Facials","Active Beauty line with thermal water and algae"],["Massages","20 to 50 minute options"],["LPG","Vacuum massage for muscle fatigue and tension"],["Calco Modellante","Body-molding with fossil powders and essential oils"],["Maremma Experience","Treatments inspired by the local territory"]]},
+private:{blurb:"Room 306 is a private suite for couples: an intimate sensory bath and a scrub, with an optional couples massage.",items:[["50 minutes","Sensory bath and scrub"],["80 minutes","Bath, scrub and a 20-minute couples massage"],["100 minutes","Bath, scrub and a 50-minute couples massage"]]}};
+function renderSpa(){document.querySelectorAll("[data-spa]").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.spa===spaTab?"true":"false")});
+var v=SPA[spaTab];$("#spa-body").innerHTML='<div class="thumb '+(spaTab==="spa"?"t-spa":"t-private")+'" style="width:100%;height:110px;display:block"><span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff"><span style="font-family:var(--display);font-size:25px;font-weight:600;line-height:1.05">'+(spaTab==="spa"?"Spa treatments":"Private SPA")+'</span><span style="font-size:12px;color:rgba(255,255,255,.88)">'+(spaTab==="spa"?"Face, body and rituals":"Room 306 · for couples")+'</span></span></div><p style="font-size:13.5px;line-height:1.55;color:var(--app-ink-2)">'+v.blurb+'</p><div class="card" style="padding:4px 14px">'+v.items.map(function(i){return '<div class="menu-item"><div><div class="a-h3">'+i[0]+'</div><span class="a-meta">'+i[1]+'</span></div></div>'}).join("")+'</div>'}
+
+function renderSlots(){var a=ACTS[B.act];$("#slots-title").textContent="Book "+a.short;
+var h='<div class="week" style="width:100%">'+DAYS.map(function(d,i){var off=a.days&&a.days.indexOf(i)<0;return '<button class="day" data-bk-day="'+i+'" aria-pressed="'+(i===B.day)+'" '+(off?'disabled style="opacity:.35"':'')+'>'+d[0]+'<b>'+d[1]+'</b></button>'}).join("")+'</div>';
+if(a.vars)h+='<div><span class="a-label">Option</span><div class="chips" style="padding:9px 0 0;flex-wrap:wrap">'+a.vars.map(function(v,i){return '<button class="chip" data-bk-var="'+i+'" aria-pressed="'+(i===B.vari)+'">'+v[0]+'</button>'}).join("")+'</div></div>';
+if(a.durs.length>1)h+='<div><span class="a-label">Duration</span><div class="seg" style="margin-top:9px">'+a.durs.map(function(d){return '<button data-bk-dur="'+d+'" aria-pressed="'+(d===B.dur)+'">'+d+' min</button>'}).join("")+'</div></div>';
+h+='<div><span class="a-label">Pick a time</span><div class="slotgrid" style="margin-top:9px">'+a.hours.map(function(t){var s=spots(B.act,B.day,t);return '<button class="slotbtn" data-bk-hour="'+t+'" aria-pressed="'+(t===B.hour&&s>0)+'" '+(s?'':'disabled')+'>'+ft(t)+'<small>'+(s?s+" "+L(s===1?"spot":"spots",s===1?"posto":"posti"):L("Full","Esaurito"))+'</small></button>'}).join("")+'</div></div>';
+h+='<div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="a-h3">'+(a.qty||"Guests")+'</div><span class="a-meta">'+(a.price?"€ "+a.price+" "+L("per "+a.unit,{guest:"a persona",player:"a giocatore",couple:"a coppia"}[a.unit]):"Included in your stay")+'</span></div><div class="stepper"><button data-step="-1" aria-label="Fewer">−</button><b>'+B.guests+'</b><button data-step="1" aria-label="More">+</button></div></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Add extras</span>'+a.addons.map(function(x,i){return '<div class="list-item"><span>'+x[0]+'<span class="a-meta" style="display:block">'+(x[1]?money(x[1])+" "+L("per guest","a persona"):"Included")+'</span></span><button class="switch" data-bk-addon="'+i+'" aria-pressed="'+(!!B.addons[i])+'" aria-label="'+x[0]+'"></button></div>'}).join("")+'</div>';
+var tot=total2();
+h+='<div class="card stack" style="gap:8px"><div style="display:flex"><span class="a-meta">'+esc(tt(a.name))+(a.vars?" · "+tt(a.vars[B.vari][0]):"")+' × '+B.guests+'</span><b style="margin-left:auto;font-size:13.5px">'+money(baseTotal())+'</b></div>'+
+Object.keys(B.addons).filter(function(i){return B.addons[i]&&a.addons[i][1]}).map(function(i){return '<div style="display:flex"><span class="a-meta">'+tt(a.addons[i][0])+' × '+B.guests+'</span><b style="margin-left:auto;font-size:13.5px">'+money(a.addons[i][1]*B.guests)+'</b></div>'}).join("")+
+'<div style="display:flex;border-top:1px solid var(--app-line);padding-top:9px"><b>Total</b><b style="margin-left:auto;font-family:var(--display);font-size:22px">'+money(tot)+'</b></div></div>';
+h+='<button class="btn amber" data-go="checkout">'+tt("Continue")+" · "+dayLabel()+", "+ft(B.hour)+'</button>';
+$("#slots-body").innerHTML=h}
+
+function renderCheckout(){var a=ACTS[B.act],tot=total2();
+var opts=[["room","Charge to Room 128","Settled at check-out","i-key"],["wallet","Apple Pay","Face ID","i-card"],["card","Visa •••• 4242","Saved card","i-card"]];
+$("#checkout-body").innerHTML='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb '+a.cls+'" style="width:54px;height:54px"></span><div><div class="a-h3">'+esc(tt(a.name))+(a.vars?" · "+tt(a.vars[B.vari][0]):"")+'</div><span class="a-meta">'+dayLabel()+' · '+ft(B.hour)+' · '+qtyStr(a,B.guests)+'</span></div></div>'+
+(tot>0?'<span class="a-label">Pay with</span><div class="stack" style="gap:9px">'+opts.map(function(o){return '<button class="payopt" data-pay="'+o[0]+'" aria-pressed="'+(B.pay===o[0])+'"><span class="radio"><svg width="12" height="12"><use href="#i-check"/></svg></span><svg width="20" height="20"><use href="#'+o[3]+'"/></svg><span style="flex:1">'+o[1]+'<span class="a-meta" style="display:block;font-weight:500">'+o[2]+'</span></span></button>'}).join("")+'</div>':'<div class="card" style="background:var(--app-mint);border-color:transparent"><b>Included in your stay</b><span class="a-meta" style="display:block">No payment needed.</span></div>')+
+'<div class="card" style="display:flex"><b>Total</b><b style="margin-left:auto;font-family:var(--display);font-size:22px">'+money(tot)+'</b></div>'+
+'<p class="a-meta" style="text-align:center">Free cancellation up to 4 hours before.</p><button class="btn amber" id="confirm-pay">'+(tot>0?tt("Confirm & pay")+" "+money(tot):tt("Confirm booking"))+'</button>'}
+
+function confirmBooking(){var a=ACTS[B.act],tot=total2();if(B.pay==="room")charged+=tot;extraTrip=[{d:B.day,h:B.hour,act:B.act,v:B.vari,g:B.guests}];B.paid=true;go("confirmed")}
+
+function renderConfirmed(){var a=ACTS[B.act];
+$("#confirmed-body").innerHTML='<div class="burst" style="margin-top:6px"><svg width="34" height="34"><use href="#i-check"/></svg></div><div><h1 class="a-h1">You\'re booked.</h1><p class="a-meta" style="margin-top:5px">Reservation TS-60418 · also sent to your email</p></div>'+
+'<div class="card stack" style="gap:10px;text-align:left"><span class="a-label">'+esc(tt(a.name))+'</span><div style="display:flex;gap:12px;align-items:center"><span class="thumb '+a.cls+'" style="width:54px;height:54px"></span><div><div class="a-h3">'+dayLabel()+' · '+ft(B.hour)+'</div><span class="a-meta">'+qtyStr(a,B.guests)+' · '+B.dur+' '+L("minutes","minuti")+(a.vars?" · "+tt(a.vars[B.vari][0]):"")+'</span></div></div>'+
+'<div class="list-item" style="padding:9px 0"><svg width="18" height="18"><use href="#i-pin"/></svg>4 min walk from Suite 128<span class="v">Directions</span></div><div class="list-item" style="padding:9px 0"><svg width="18" height="18"><use href="#i-bell"/></svg>Remind me 1 hour before<button class="switch" data-switch aria-pressed="true" aria-label="Reminder"></button></div></div>'+
+'<div class="quote" style="text-align:left">Arrive 10 minutes early. For the thermal areas, remember the pure-white dress code: robe and towels are at reception.<span class="who">Terme di Saturnia</span></div>'+
+'<button class="btn" data-go="pass"><svg width="18" height="18"><use href="#i-qr"/></svg>Show thermal pass</button><button class="btn outline" data-go="trip">See my trip</button>'}
+
+function qr(){var n=25,s=7,cells="",seed=60418;function r(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff}
+function inF(x,y){return (x<8&&y<8)||(x>=n-8&&y<8)||(x<8&&y>=n-8)}
+function finder(ox,oy){var o="";for(var i=0;i<7;i++)for(var j=0;j<7;j++){var e=i===0||j===0||i===6||j===6,c=i>=2&&i<=4&&j>=2&&j<=4;if(e||c)o+='<rect x="'+((ox+i)*s)+'" y="'+((oy+j)*s)+'" width="'+s+'" height="'+s+'"/>'}return o}
+for(var x=0;x<n;x++)for(var y=0;y<n;y++){if(inF(x,y))continue;if(r()>.52)cells+='<rect x="'+(x*s)+'" y="'+(y*s)+'" width="'+s+'" height="'+s+'"/>'}
+return '<svg viewBox="0 0 '+(n*s)+' '+(n*s)+'" width="200" height="200" fill="#1E2A33" shape-rendering="crispEdges" aria-label="Thermal pass QR code">'+cells+finder(0,0)+finder(n-7,0)+finder(0,n-7)+'</svg>'}
+function renderPass(){var a=ACTS[B.act];$("#pass-body").innerHTML='<div class="qrbox">'+qr()+'</div><div><div class="a-h2">'+esc(tt(a.name))+'</div><span class="a-meta">'+dayLabel()+' · '+ft(B.hour)+' · '+qtyStr(a,B.guests)+'</span></div><p class="a-meta">Show this at the entrance. Staff scan it, no paper vouchers.</p><button class="btn outline"><svg width="16" height="16"><use href="#i-share"/></svg>Send to my partner</button>'}
+
+var DINE={
+"1919":{t:"1919 Restaurant",d:"Tuscan cuisine in the heart of the resort",cls:"t-dine",hours:[["Breakfast","7:30 – 11:00 AM"],["Light lunch","12:30 – 2:30 PM"],["Dinner","7:30 – 10:30 PM"]],cta:["Reserve a table","Add to my plan"]},
+"stellata":{t:"La Stellata",d:"Country restaurant in a historic farmhouse, overlooking the golf course",cls:"t-golf",hours:[["Setting","Traditional Tuscan trattoria"],["View","Over the golf course"],["Included in","Dinner Included offer"]],cta:["Reserve a table","Ask the concierge"]},
+"bar":{t:"Il Bar · Drink & Food Library",d:"Lounge and bar overlooking the water",cls:"t-night",hours:[["Bar","10:00 AM – midnight"],["Kitchen","12:00 – 10:00 PM"]],cta:["Reserve a seat","Add to my plan"]}};
+var dine="1919";
+function renderDine(){var v=DINE[dine];document.querySelectorAll("[data-dine]").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.dine===dine?"true":"false")});
+$("#dine-body").innerHTML='<div class="thumb '+v.cls+'" style="width:100%;height:128px;display:block"><span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;text-align:left;color:#fff"><span style="font-family:var(--display);font-size:26px;font-weight:600;line-height:1.05">'+v.t+'</span><span style="font-size:12px;color:rgba(255,255,255,.88)">'+v.d+'</span></span></div><div style="display:flex;gap:9px"><button class="btn sm" data-toast="Table request sent to '+v.t+'" style="flex:1">'+v.cta[0]+'</button><button class="btn outline sm" data-toast="Done. We have noted it for you." style="flex:1">'+v.cta[1]+'</button></div><div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Hours &amp; details</span>'+v.hours.map(function(i){return '<div class="hrow"><b>'+i[0]+'</b><span class="h">'+i[1]+'</span></div>'}).join("")+'</div>'}
+
+var msgs=[
+{r:"out",t:"Can we book the Private SPA for Thursday afternoon?",i:"Possiamo prenotare la Private SPA giovedì pomeriggio?",ts:"1:02 PM"},
+{r:"in",t:"Yes. Room 306 is free on Thursday at 3:00 and 5:30 PM. You can choose 50, 80 or 100 minutes.",i:"Sì. La Camera 306 è libera giovedì alle 15:00 e alle 17:30. Puoi scegliere 50, 80 o 100 minuti.",ts:"1:03 PM",who:1,a:[["Book Private SPA","act:private"]]}];
+var KB=[
+[/private|couple|room 306|romantic|privata|coppia|camera 306|romantic/i,"The Private SPA is Room 306, a suite for couples with a sensory bath and scrub. Choose 50, 80 or 100 minutes, with an optional couples massage.","La Private SPA è la Camera 306, una suite per coppie con bagno sensoriale e scrub. Scegli 50, 80 o 100 minuti, con massaggio di coppia facoltativo.",[["Book Private SPA","act:private"]]],
+[/massage|spa|treatment|facial|lpg|calco|massagg|trattament|viso/i,"The spa offers facials, massages from 20 to 50 minutes, LPG, Calco Modellante and the Maremma Experience.","La spa offre trattamenti viso, massaggi da 20 a 50 minuti, LPG, Calco Modellante e la Maremma Experience.",[["Book a treatment","act:spa"]]],
+[/golf|tee|driving range|clinic|stellata/i,"The 18-hole, par-72 course was designed by Ronald Fream and is GEO certified. The driving range is included for resort guests.","Il percorso a 18 buche, par 72, è stato disegnato da Ronald Fream ed è certificato GEO. Il driving range è incluso per gli ospiti del resort.",[["Book a tee time","act:golf"]]],
+[/spring|thermal|water|temperature|pool|friday|midnight|night|sorgente|termal|acqua|temperatura|piscin|venerd|mezzanotte|notte|bagno/i,"The spring water is 37.5°C. The Spring and Roman Bath are open 7:30 AM to 7:45 PM, and every Friday the Spring stays open until midnight.","L'acqua della sorgente è a 37,5°C. La Sorgente e il Bagno Romano sono aperti dalle 7:30 alle 19:45, e ogni venerdì la Sorgente resta aperta fino a mezzanotte.",[["Book a Friday night soak","act:night"]]],
+[/robe|towel|dress|white|bring|wear|accappatoio|telo|teli|bianco|portare|indossare/i,"The dress code in the thermal areas is pure white. Bring your own robe and towels, or collect them at reception, included in your stay.","Nelle aree termali il dress code è total white. Porta il tuo accappatoio e i tuoi teli, oppure ritirali alla reception: sono inclusi nel soggiorno.",null],
+[/check.?in|check.?out|late|early|anticip|tardi/i,"Check-in is from 3 PM and check-out is at 11 AM. Early check-in or late check-out depends on availability and may carry a fee. I can send your request to reception.","Il check-in è dalle 15:00 e il check-out alle 11:00. Check-in anticipato o late check-out dipendono dalla disponibilità e possono avere un costo. Posso inviare la richiesta alla reception.",null],
+[/bike|e-bike|cycle|cycling|bicicl/i,"E-bikes are free for resort guests, up to 2 hours, with maps or a guided tour available.","Le e-bike sono gratuite per gli ospiti del resort, fino a 2 ore, con mappe o tour guidato.",[["Book an e-bike","act:ebike"]]],
+[/yoga|ritual|sauna|aufguss|walk|rituali|camminata/i,"The Rituals Sauna in the Spring Park hosts Aufguss rituals and sauna ceremonies. Group yoga and a guided morning walk are included.","La Rituals Sauna nel Parco della Sorgente ospita rituali Aufguss e cerimonie in sauna. Yoga di gruppo e camminata guidata del mattino sono inclusi.",[["Book a ritual","act:ritual"]]],
+[/dinner|eat|food|restaurant|breakfast|lunch|bar|1919|cena|cenare|mangiare|ristorant|colazione|pranzo/i,"The 1919 Restaurant serves breakfast, a light lunch and dinner. La Stellata is a country restaurant over the golf course, and the Drink & Food Library bar is open until midnight.","Il Ristorante 1919 serve colazione, pranzo leggero e cena. La Stellata è un country restaurant con vista sul campo da golf, e il bar Drink & Food Library è aperto fino a mezzanotte.",[["See dining","go:dining"]]],
+[/excursion|mulino|cascate|pitigliano|horse|riding|tour|visit|maremma|escursion|cavallo|visita/i,"I can arrange a visit to the Cascate del Mulino or Pitigliano, or a horseback ride in the Maremma. I'll pass your request to the concierge to confirm times.","Posso organizzare una visita alle Cascate del Mulino o a Pitigliano, oppure una passeggiata a cavallo in Maremma. Passo la richiesta al concierge per confermare gli orari.",null],
+[/pet|dog|cane|cani|animali/i,"Garden Junior Suites and Thermal Pool Junior Suites are pet friendly. I can check availability for your dates.","Le Junior Suite Giardino e le Junior Suite con piscina termale accettano animali. Posso verificare la disponibilità per le tue date.",null],
+[/cancel|change|reschedule|cancell|modific|spost/i,"You can cancel any booking free up to 4 hours before from My trip.","Puoi cancellare qualsiasi prenotazione gratuitamente fino a 4 ore prima dal tuo programma.",[["Open My trip","go:trip"]]],
+[/human|person|front desk|staff|call|whatsapp|operatore|chiam/i,"Of course. I've flagged this for the concierge team and they will message you in a few minutes. You can also call +39 0564 600809.","Certo. Ho segnalato la richiesta al team concierge, che ti scriverà tra pochi minuti. Puoi anche chiamare il +39 0564 600809.",null]];
+var SUG=["What should I bring?","Book a tee time","Where can I eat tonight?","Friday night soak","Talk to a person"];
+function paintMsgs(typing){var m=$("#msgs");
+m.innerHTML=msgs.map(function(x){var txt=(LANG==="it"&&x.i)?x.i:x.t;return '<div class="bubble '+x.r+'">'+esc(txt)+(x.a?'<div class="acts">'+x.a.map(function(a){return '<button data-x="'+a[1]+'">'+a[0]+'</button>'}).join("")+'</div>':'')+'<small>'+(x.who?"Concierge · ":"")+ft(x.ts)+'</small></div>'}).join("")+(typing?'<div class="bubble in typing"><i></i><i></i><i></i></div>':'');
+m.scrollTop=m.scrollHeight;flush()}
+function ask(q){var ts=new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});msgs.push({r:"out",t:q,ts:ts});paintMsgs(true);
+var hit=null;for(var i=0;i<KB.length;i++){if(KB[i][0].test(q)){hit=KB[i];break}}
+setTimeout(function(){msgs.push({r:"in",t:hit?hit[1]:"Good question. I'll check with the team and follow up here shortly. Meanwhile I can book the spa, golf or dinner, or connect you with a person.",i:hit?hit[2]:"Bella domanda. Controllo con il team e ti rispondo qui a breve. Nel frattempo posso prenotare spa, golf o cena, oppure metterti in contatto con una persona.",ts:ts,who:1,a:hit?hit[3]:null});paintMsgs()},750)}
+function renderChat(){paintMsgs();$("#sugg").innerHTML=SUG.map(function(x){return '<button class="chip" data-sug>'+x+'</button>'}).join("")}
+
+function renderTrip(){var base=[{time:"5:00 PM",title:"Massage · 50 min",meta:"Spa · Confirmed",now:true},{time:"8:00 PM",title:"1919 Restaurant",meta:"Table for 2 · Confirmed"}];
+var items=extraTrip.map(function(x){var a=ACTS[x.act];return {time:dayLabelFor(x.d)+" · "+ft(x.h),title:tt(a.name)+(a.vars?" · "+tt(a.vars[x.v][0]):""),meta:qtyStr(a,x.g)+" · "+tt("Just booked"),now:true}}).concat(base,[{time:"Thu 9:30 AM",title:"Golf di Terme di Saturnia",meta:"Pending: tee time held",sug:true}]);
+$("#trip-body").innerHTML=items.map(function(i){return '<div class="tl '+(i.now?"now":"")+(i.sug?" sug":"")+'"><span class="t">'+i.time+'</span><div class="a-h3">'+esc(i.title)+'</div><span class="a-meta">'+i.meta+'</span></div>'}).join("");
+$("#stay-charges").textContent=money(charged);$("#stay-count").textContent=2+extraTrip.length}
+
+var views={},railItems={};
+document.querySelectorAll("[data-view]").forEach(function(v){views[v.dataset.view]=v});
+document.querySelectorAll(".rail-item").forEach(function(b){railItems[b.dataset.go]=b});
+var current=null;
+function render(id){if(id==="spa")renderSpa();if(id==="slots")renderSlots();if(id==="checkout")renderCheckout();if(id==="confirmed")renderConfirmed();if(id==="pass")renderPass();if(id==="dining")renderDine();if(id==="chat")renderChat();if(id==="trip"||id==="stay")renderTrip()}
+function go(id){
+if(!views[id])return;
+var changed=id!==current;current=id;render(id);
+if(!changed)return;
+Object.keys(views).forEach(function(k){views[k].classList.toggle("active",k===id)});
+Object.keys(railItems).forEach(function(k){railItems[k].setAttribute("aria-current",k===id?"true":"false")});
+var sc=views[id].querySelector(".app-scroll");if(sc&&id!=="chat")sc.scrollTop=0;
+var tab=(TABS.filter(function(t){return t.match.indexOf(id)>-1})[0]||{}).id;
+document.querySelectorAll("[data-tab]").forEach(function(t){t.setAttribute("aria-current",t.dataset.tab===tab?"true":"false")});
+var n=NOTES[id];
+$("#n-group").textContent=n.group;$("#n-title").textContent=n.title;$("#n-lede").textContent=n.lede;
+$("#n-list").innerHTML=n.list.map(function(x){return "<li>"+x+"</li>"}).join("");$("#n-why").textContent=n.why;
+var i=ORDER.indexOf(id);$("#prev").disabled=(i<=0);$("#next").disabled=(i>=ORDER.length-1);
+if(history.replaceState)history.replaceState(null,"","#"+id);flush()}
+function step(d){var i=ORDER.indexOf(current)+d;if(i>=0&&i<ORDER.length)go(ORDER[i])}
+function toast(t){var e=$("#toast");if(!e){e=document.createElement("div");e.id="toast";e.style.cssText="position:absolute;left:50%;bottom:92px;transform:translateX(-50%);background:#1E2A33;color:#fff;font-size:12.5px;font-weight:600;padding:10px 16px;border-radius:99px;z-index:20;transition:opacity .2s;max-width:80%;text-align:center";document.querySelector(".screen").appendChild(e)}
+e.textContent=t;flush();e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.opacity=0},2200)}
+function action(x){var p=x.split(":"),k=p[0],v=p.slice(1).join(":");if(k==="act"){setAct(v);go("slots")}else if(k==="go")go(v);else if(k==="toast")toast(v)}
+$("#prev").addEventListener("click",function(){step(-1)});$("#next").addEventListener("click",function(){step(1)});
+document.addEventListener("click",function(e){
+var t;
+if(t=e.target.closest("[data-x]")){action(t.dataset.x);return}
+if(t=e.target.closest("[data-spa]")){spaTab=t.dataset.spa;setAct(spaTab);renderSpa();return}
+if(t=e.target.closest("[data-book]")){var k=t.dataset.book;if(k==="current"){if(current==="spa")setAct(spaTab)}else setAct(k);go("slots");return}
+if(t=e.target.closest("[data-go]")){e.preventDefault();go(t.dataset.go);return}
+if(t=e.target.closest("[data-dine]")){dine=t.dataset.dine;renderDine();return}
+if(t=e.target.closest("[data-toast]")){toast(t.dataset.toast);return}
+if(t=e.target.closest("[data-bk-day]")){B.day=+t.dataset.bkDay;renderSlots();return}
+if(t=e.target.closest("[data-bk-hour]")){B.hour=t.dataset.bkHour;renderSlots();return}
+if(t=e.target.closest("[data-bk-var]")){B.vari=+t.dataset.bkVar;renderSlots();return}
+if(t=e.target.closest("[data-bk-dur]")){B.dur=+t.dataset.bkDur;renderSlots();return}
+if(t=e.target.closest("[data-bk-addon]")){var i=t.dataset.bkAddon;B.addons[i]=!B.addons[i];renderSlots();return}
+if(t=e.target.closest("[data-step]")){B.guests=Math.max(1,Math.min(ACTS[B.act].maxQty||8,B.guests+(+t.dataset.step)));renderSlots();return}
+if(t=e.target.closest("[data-pay]")){B.pay=t.dataset.pay;renderCheckout();return}
+if(t=e.target.closest("#confirm-pay")){confirmBooking();return}
+if(t=e.target.closest("[data-sug]")){ask(t.textContent);return}
+var grp=e.target.closest("[data-chip],[data-seg],[data-day]");
+if(grp){var kind=grp.hasAttribute("data-chip")?"data-chip":grp.hasAttribute("data-seg")?"data-seg":"data-day";
+grp.parentElement.querySelectorAll("["+kind+"]").forEach(function(s){s.setAttribute("aria-pressed",s===grp?"true":"false")});return}
+var sw=e.target.closest("[data-switch]");if(sw)sw.setAttribute("aria-pressed",sw.getAttribute("aria-pressed")==="true"?"false":"true")});
+document.addEventListener("click",function(){flush()});
+$("#chat-form").addEventListener("submit",function(e){e.preventDefault();var v=$("#chat-inp").value.trim();if(v){$("#chat-inp").value="";ask(v)}});
+var nb=$("#notes-toggle");
+function setNotes(on){document.body.setAttribute("data-notes",on?"on":"off");nb.setAttribute("aria-pressed",on?"true":"false");try{localStorage.setItem("ts-notes",on?"on":"off")}catch(e){}}
+nb.addEventListener("click",function(){setNotes(document.body.getAttribute("data-notes")!=="on")});
+document.addEventListener("keydown",function(e){if(e.target.matches("input,textarea"))return;
+if(e.key==="ArrowRight")step(1);if(e.key==="ArrowLeft")step(-1);if(e.key==="n"||e.key==="N")nb.click()});
+var sn=null;try{sn=localStorage.getItem("ts-notes")}catch(e){}
+setNotes(sn==="on");
+var lb=$("#lang-toggle");
+function setLang(l){LANG=l;document.documentElement.lang=l;applyAll();render(current);lb.textContent=(l==="it"?"EN":"IT");lb.title=(l==="it"?"Switch to English":"Passa all'italiano");
+ try{var u=new URL(location.href);u.searchParams.set("lang",l);history.replaceState(null,"",u.pathname+u.search+location.hash)}catch(e){}}
+lb.addEventListener("click",function(){setLang(LANG==="it"?"en":"it")});
+var start=(location.hash||"").replace("#","");
+go(views[start]?start:"welcome");
+document.documentElement.lang=LANG;applyAll();lb.textContent=(LANG==="it"?"EN":"IT");lb.title=(LANG==="it"?"Switch to English":"Passa all'italiano");
+document.querySelectorAll(TEXT_ROOTS).forEach(function(r){mo.observe(r,{childList:true,subtree:true})});
+})();
+</script></body></html>
